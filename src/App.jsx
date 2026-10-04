@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { questionSets, topics } from './questions'
+import { questionSets } from './questions'
 
 function JsonBlock({ value }) {
   const initialJson = typeof value === 'string' ? value : JSON.stringify(value)
@@ -119,7 +119,8 @@ function App() {
     setActiveTopic(topic)
   }
 
-  const questionSet = questionSets[activeTopic]
+  const selectedTopic = questionSets.find((topicSet) => topicSet.topic === activeTopic)
+  const questionSet = selectedTopic.questions
 
   return (
     <div className="study-app">
@@ -128,10 +129,21 @@ function App() {
         <nav className="topic-nav" aria-label="Topics">
           <div className="nav-section"><span className="nav-section-icon">⌘</span><span>JavaScript Basics</span><span className="chevron">⌃</span></div>
           <ul className="topic-list">
-            {topics.map((topic) => <li key={topic}>
-              <button className={`topic-item ${topic === activeTopic ? 'active' : ''}`} onClick={() => selectTopic(topic)}>
-                <span className="topic-marker" />{topic}<span className="topic-count">{questionSets[topic].length}</span>
+            {questionSets.map((topicSet) => <li key={topicSet.topic}>
+              <button className={`topic-item ${topicSet.topic === activeTopic ? 'active' : ''}`} onClick={() => selectTopic(topicSet.topic)}>
+                <span className="topic-marker" />{topicSet.topic}<span className="topic-count">{topicSet.questions.length}</span>
               </button>
+              {topicSet.mediumLink && (
+                <a
+                  className="topic-medium-link"
+                  href={topicSet.mediumLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open the Medium article for ${topicSet.topic}`}
+                >
+                  Medium
+                </a>
+              )}
             </li>)}
           </ul>
           </nav>

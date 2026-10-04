@@ -14,13 +14,6 @@ console.log(counter());`,
     answer: '1 then 2. The returned function closes over the same `count` binding, so it keeps its value between calls.',
   },
   {
-    title: 'In your own words, what is a closure?',
-    type: 'text',
-    label: 'CONCEPT',
-    prompt: 'Describe what a function remembers from the place where it was created, even after that outer function has finished running.',
-    answer: 'A closure is a function bundled with references to the variables in its surrounding lexical scope. It can still access those variables after the outer function has returned.',
-  },
-  {
     title: 'What is the value of `readSecret()`?',
     type: 'mixed',
     label: 'OUTPUT BASED',
@@ -39,23 +32,6 @@ console.log(counter());`,
   setTimeout(() => console.log(i), 0);
 }`,
     answer: 'It prints `4` three times. `var` creates one function-scoped binding shared by every callback; the callbacks run after the loop has finished.',
-  },
-  {
-    title: 'Which declaration gives each callback its own loop value?',
-    type: 'json',
-    label: 'CHOOSE ONE',
-    data: {
-      question: 'Pick the declaration that creates a fresh binding for each iteration.',
-      choices: ['A. var index = 0', 'B. let index = 0', 'C. const index = 0'],
-    },
-    answer: '`B. let index = 0`. A `let` declaration in the loop header creates a per-iteration binding captured by each callback.',
-  },
-  {
-    title: 'Can you make a private score with a closure?',
-    type: 'text',
-    label: 'WRITE A FUNCTION',
-    prompt: 'Write a `createScore` function that starts at zero and returns an object with `add` and `value` methods. The score should not be directly accessible from outside.',
-    answer: 'Keep `score` inside `createScore`, then return methods that close over it: `function createScore() { let score = 0; return { add() { score += 1; }, value() { return score; } }; }`',
   },
 ]
 
@@ -90,5 +66,15 @@ console.log(names);`,
   },
 ]
 
-export const questionSets = { Closures: topicClosure, Map: topicMap }
-export const topics = Object.keys(questionSets)
+export const questionSets = [
+  {
+    topic: 'Closures',
+    questions: topicClosure,
+    mediumLink: null,
+  },
+  {
+    topic: 'Map',
+    questions: topicMap,
+    mediumLink: 'https://medium.com/@contactmanoharbatra/a-map-0512030090ed',
+  },
+]

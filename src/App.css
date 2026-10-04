@@ -23,13 +23,15 @@ button { -webkit-tap-highlight-color: transparent; }
 .chevron { margin-left: auto; font-size: 17px; color: #ced5de; }
 .topic-list { position: relative; list-style: none; margin: 8px 0 14px 21px; padding: 0 0 0 16px; }
 .topic-list::before { position: absolute; content: ''; top: 8px; bottom: 8px; left: 4px; width: 1px; background: #3a4859; }
-.topic-list li { position: relative; }
-.topic-item { width: 100%; min-height: 34px; display: flex; align-items: center; gap: 11px; padding: 0 10px; border: 0; border-radius: 5px; color: #d9e0e8; background: transparent; text-align: left; font-size: 12px; cursor: pointer; }
+.topic-list li { position: relative; display: flex; align-items: center; gap: 3px; }
+.topic-item { min-width: 0; flex: 1; min-height: 34px; display: flex; align-items: center; gap: 11px; padding: 0 10px; border: 0; border-radius: 5px; color: #d9e0e8; background: transparent; text-align: left; font-size: 12px; cursor: pointer; }
 .topic-item:hover { background: #233244; }
 .topic-item.active { background: #304155; color: white; font-weight: 650; }
 .topic-marker { position: absolute; left: -16px; z-index: 1; width: 7px; height: 7px; border-radius: 50%; background: #647286; }
 .topic-item.active .topic-marker { width: 9px; height: 9px; left: -17px; background: var(--yellow); box-shadow: 0 0 0 3px rgb(255 211 28 / 14%); }
 .topic-count { margin-left: auto; color: #bac5d1; font-size: 11px; }
+.topic-medium-link { flex: 0 0 auto; padding: 4px 5px; border-radius: 4px; color: #b8c4d1; text-decoration: none; font-size: 9px; }
+.topic-medium-link:hover { color: #fff; background: #263445; text-decoration: underline; }
 .nav-section.muted { color: #e0e5ec; background: transparent; }
 .sidebar-foot { padding: 14px 8px 2px; border-top: 1px solid #2c3949; color: var(--sidebar-muted); font-size: 11px; }
 .status-dot { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: #8ac6a1; }
