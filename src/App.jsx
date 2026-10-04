@@ -81,24 +81,45 @@ function Prompt({ question }) {
       : <CodeBlock key={index} value={part.value} />)}</div>
 }
 
+function QuestionCard({ question, index, total }) {
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false)
+  const answerId = `answer-explanation-${index}`
+
+  return (
+    <article className="question-card">
+      <div className="question-meta"><span>QUESTION <strong>{String(index + 1).padStart(2, '0')}</strong> <span className="meta-divider">/</span> {String(total).padStart(2, '0')}</span><span className="question-tag">{question.label}</span></div>
+      <div className="progress-track" role="progressbar" aria-label={`Question ${index + 1} progress`} aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={total}><span style={{ width: `${((index + 1) / total) * 100}%` }} /></div>
+      <h2 className="question-title">{question.title}</h2>
+      <Prompt question={question} />
+      <div className="answer-area">
+        <div className="answer-heading">
+          <button
+            className="reveal-button"
+            type="button"
+            aria-expanded={isAnswerVisible}
+            aria-controls={answerId}
+            onClick={() => setIsAnswerVisible(!isAnswerVisible)}
+          >
+            <span aria-hidden="true">{isAnswerVisible ? '−' : '+'}</span>
+            {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
+          </button>
+        </div>
+        <div id={answerId} className="revealed-answer" hidden={!isAnswerVisible}>
+          <p>{question.answer}</p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function App() {
   const [activeTopic, setActiveTopic] = useState('Closures')
-  const [activeQuestion, setActiveQuestion] = useState(0)
-  const [isAnswerVisible, setIsAnswerVisible] = useState(false)
-
-  function selectQuestion(index) {
-    setActiveQuestion(index)
-    setIsAnswerVisible(false)
-  }
 
   function selectTopic(topic) {
     setActiveTopic(topic)
-    setActiveQuestion(0)
-    setIsAnswerVisible(false)
   }
 
   const questionSet = questionSets[activeTopic]
-  const question = questionSet[activeQuestion]
 
   return (
     <div className="study-app">
@@ -120,51 +141,9 @@ function App() {
       <main className="main-content" id="top">
         <header className="topbar"><div className="breadcrumbs"><span>JavaScript Basics</span><span className="crumb-divider">/</span><span>{activeTopic}</span></div><span className="topbar-note">PRACTICE SET <span>01</span></span></header>
         <section className="workspace">
-          <article className="question-card">
-            <div className="question-meta"><span>QUESTION <strong>{String(activeQuestion + 1).padStart(2, '0')}</strong> <span className="meta-divider">/</span> {String(questionSet.length).padStart(2, '0')}</span><span className="question-tag">{question.label}</span></div>
-            <div className="progress-track" role="progressbar" aria-label="Question progress" aria-valuenow={activeQuestion + 1} aria-valuemin={1} aria-valuemax={questionSet.length}><span style={{ width: `${((activeQuestion + 1) / questionSet.length) * 100}%` }} /></div>
-            <h2 className="question-title">{question.title}</h2>
-            <Prompt key={`${activeTopic}-${activeQuestion}`} question={question} />
-            <div className="answer-area">
-              <div className="answer-heading">
-                <button
-                  className="reveal-button"
-                  type="button"
-                  aria-expanded={isAnswerVisible}
-                  aria-controls="answer-explanation"
-                  onClick={() => setIsAnswerVisible(!isAnswerVisible)}
-                >
-                  <span aria-hidden="true">{isAnswerVisible ? '−' : '+'}</span>
-                  {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
-                </button>
-              </div>
-              <div id="answer-explanation" className="revealed-answer" hidden={!isAnswerVisible}>
-                <p>{question.answer}</p>
-              </div>
-            </div>
-            <div className="card-actions">
-              <nav className="pagination" aria-label="Question navigation">
-                <button
-                  className="previous-button"
-                  type="button"
-                  onClick={() => selectQuestion(activeQuestion - 1)}
-                  disabled={activeQuestion === 0}
-                >
-                  <svg className="arrow arrow-left" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-                  Previous
-                </button>
-                <button
-                  className="next-button"
-                  type="button"
-                  onClick={() => selectQuestion(activeQuestion + 1)}
-                  disabled={activeQuestion === questionSet.length - 1}
-                >
-                  Next
-                  <svg className="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-                </button>
-              </nav>
-            </div>
-          </article>
+          {questionSet.map((question, index) => (
+            <QuestionCard key={`${activeTopic}-${index}`} question={question} index={index} total={questionSet.length} />
+          ))}
           <footer className="workspace-footer"><span>Keep going. Every question makes the concepts clearer.</span><span>JS MCQ <i>·</i> LEARNING BY DOING</span></footer>
         </section>
       </main>

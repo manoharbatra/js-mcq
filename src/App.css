@@ -48,6 +48,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .heading-copy { margin-top: 8px; color: #788598; font-size: 13px; }
 .heading-mark { width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid #e5e9ee; border-radius: 12px; color: #77879b; background: #fff; font-family: Consolas, monospace; font-size: 18px; }
 .question-card { padding: 27px 30px 22px; border: 1px solid #e9edf1; border-radius: 7px; background: var(--paper); box-shadow: 0 10px 32px rgb(27 47 70 / 3%); }
+.question-card + .question-card { margin-top: 16px; }
 .question-meta { display: flex; align-items: center; justify-content: space-between; color: #7b8797; font-size: 11px; font-weight: 650; letter-spacing: .4px; }
 .question-meta strong { color: var(--ink); }
 .meta-divider { padding: 0 4px; color: #bcc4ce; }
