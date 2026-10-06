@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import './App.css'
 import { questionSets } from './questions'
+import './App.css'
 
 function JsonBlock({ value }) {
   const initialJson = typeof value === 'string' ? value : JSON.stringify(value)
@@ -89,6 +89,7 @@ function QuestionCard({ question, index, total }) {
     <article className="question-card">
       <div className="question-meta"><span>QUESTION <strong>{String(index + 1).padStart(2, '0')}</strong> <span className="meta-divider">/</span> {String(total).padStart(2, '0')}</span><span className="question-tag">{question.label}</span></div>
       <div className="progress-track" role="progressbar" aria-label={`Question ${index + 1} progress`} aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={total}><span style={{ width: `${((index + 1) / total) * 100}%` }} /></div>
+      {question.eyebrow && <p className="eyebrow">{question.eyebrow}</p>}
       <h2 className="question-title">{question.title}</h2>
       <Prompt question={question} />
       <div className="answer-area">
