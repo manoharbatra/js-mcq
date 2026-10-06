@@ -192,11 +192,11 @@ export const questionSets = [
   {
     topic: 'Closures',
     questions: topicClosure,
-    mediumLink: 'https://medium.com/@contactmanoharbatra/closures-22ca6f136e88?sk=3ffc9df2e4c17a974ed074cb0f85e8d4',
+    mediumLink: 'https://medium.com/@contactmanoharbatra/closures-22ca6f136e88',
   },
   {
     topic: 'Map',
     questions: topicMap,
-    mediumLink: 'https://medium.com/@contactmanoharbatra/a-map-0512030090ed',
+    mediumLink: '',
   },
 ]
