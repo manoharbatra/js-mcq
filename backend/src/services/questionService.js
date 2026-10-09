@@ -4,7 +4,10 @@ import { Topic } from '../models/Topic.js'
 import { HttpError } from '../utils/errors.js'
 
 export async function listQuestions(filter) {
-  return Question.find(filter).sort({ order: 1, createdAt: 1 }).lean()
+  return Question.find(filter)
+    .select('topic subtopic title label content answer mediumUrl compilerUrl createdAt updatedAt')
+    .sort({ createdAt: 1 })
+    .lean()
 }
 
 export async function createQuestion(input) {
@@ -33,43 +36,30 @@ export async function deleteQuestion(id) {
   if (!question) throw new HttpError(404, 'Question not found')
 }
 
-export async function listPublishedQuestions(topicSlug, subtopicSlug) {
-  const topic = await Topic.findOne({ slug: topicSlug, isPublished: true }).select('_id')
+export async function listPublicQuestions(topicSlug, subtopicSlug) {
+  const topic = await Topic.findOne({ slug: topicSlug }).select('_id')
   if (!topic) throw new HttpError(404, 'Topic not found')
   const subtopic = await Subtopic.findOne({
     topic: topic._id,
     slug: subtopicSlug,
-    isPublished: true,
   }).select('_id')
   if (!subtopic) throw new HttpError(404, 'Subtopic not found')
 
   const questions = await Question.find({
     topic: topic._id,
     subtopic: subtopic._id,
-    isPublished: true,
   })
-    .select('-correctOption -explanation -__v')
-    .sort({ order: 1, createdAt: 1 })
+    .select('title label content answer mediumUrl compilerUrl')
+    .sort({ createdAt: 1 })
     .lean()
 
-  return questions.map(({ _id, title, label, content, options, order }) => ({
+  return questions.map(({ _id, title, label, content, answer, mediumUrl, compilerUrl }) => ({
     id: _id,
     title,
     label,
     content,
-    options,
-    order,
+    answer,
+    mediumUrl,
+    compilerUrl,
   }))
-}
-
-export async function submitAnswer(id, optionIndex) {
-  const question = await Question.findOne({ _id: id, isPublished: true })
-    .select('options correctOption explanation')
-  if (!question) throw new HttpError(404, 'Question not found')
-  if (optionIndex >= question.options.length) throw new HttpError(400, 'Selected option does not exist')
-  return {
-    correct: optionIndex === question.correctOption,
-    correctOption: question.correctOption,
-    explanation: question.explanation,
-  }
 }

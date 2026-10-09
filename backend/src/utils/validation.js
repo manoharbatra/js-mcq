@@ -2,8 +2,13 @@ import { z } from 'zod'
 
 const slugSchema = z.string().trim().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const descriptionSchema = z.string().trim().max(500).optional().default('')
-const orderSchema = z.number().int().min(0).max(100000).optional().default(0)
-const publishedSchema = z.boolean().optional().default(false)
+const optionalHttpUrlSchema = z.union([
+  z.literal(''),
+  z.string().trim().max(2048).url().refine((value) => {
+    const protocol = new URL(value).protocol
+    return protocol === 'http:' || protocol === 'https:'
+  }, 'URL must use HTTP or HTTPS'),
+]).optional().default('')
 const contentPartSchema = z.object({
   kind: z.enum(['text', 'code', 'json']),
   value: z.union([z.string().max(20000), z.record(z.string(), z.unknown())]),
@@ -18,45 +23,25 @@ export const topicSchema = z.object({
   name: z.string().trim().min(1).max(100),
   slug: slugSchema,
   description: descriptionSchema,
-  order: orderSchema,
-  isPublished: publishedSchema,
 }).strict()
 
 export const subtopicSchema = z.object({
   name: z.string().trim().min(1).max(100),
   slug: slugSchema,
   description: descriptionSchema,
-  order: orderSchema,
-  isPublished: publishedSchema,
 }).strict()
 
 const questionFieldsSchema = z.object({
   topic: z.string().regex(/^[a-f\d]{24}$/i),
   subtopic: z.string().regex(/^[a-f\d]{24}$/i),
   title: z.string().trim().min(1).max(300),
-  label: z.string().trim().max(60).optional().default('MULTIPLE CHOICE'),
+  label: z.string().trim().max(60).optional().default('SHORT ANSWER'),
   content: z.array(contentPartSchema).max(20).optional().default([]),
-  options: z.array(z.string().trim().min(1).max(1000)).min(2).max(6),
-  correctOption: z.number().int().min(0),
-  explanation: z.string().trim().min(1).max(10000),
-  order: orderSchema,
-  isPublished: publishedSchema,
+  answer: z.string().trim().min(1).max(10000),
+  mediumUrl: optionalHttpUrlSchema,
+  compilerUrl: optionalHttpUrlSchema,
 }).strict()
 
-export const questionSchema = questionFieldsSchema.refine((value) => value.correctOption < value.options.length, {
-  path: ['correctOption'],
-  message: 'Select an existing option',
-})
+export const questionSchema = questionFieldsSchema
 
-export const questionUpdateSchema = questionFieldsSchema.partial().refine((value) => (
-  value.correctOption === undefined
-  || value.options === undefined
-  || value.correctOption < value.options.length
-), {
-  path: ['correctOption'],
-  message: 'Select an existing option',
-})
-
-export const answerSchema = z.object({
-  optionIndex: z.number().int().min(0).max(5),
-}).strict()
+export const questionUpdateSchema = questionFieldsSchema.partial()

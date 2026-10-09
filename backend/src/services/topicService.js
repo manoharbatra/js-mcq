@@ -5,8 +5,8 @@ import { HttpError } from '../utils/errors.js'
 
 export async function listTopicsForAdmin() {
   const [topics, subtopics] = await Promise.all([
-    Topic.find().sort({ order: 1, name: 1 }).lean(),
-    Subtopic.find().sort({ order: 1, name: 1 }).lean(),
+    Topic.find().select('name slug description createdAt updatedAt').sort({ name: 1 }).lean(),
+    Subtopic.find().select('topic name slug description createdAt updatedAt').sort({ name: 1 }).lean(),
   ])
   const groupedSubtopics = new Map()
   for (const subtopic of subtopics) {
@@ -64,11 +64,15 @@ export async function deleteSubtopic(id) {
   if (!subtopic) throw new HttpError(404, 'Subtopic not found')
 }
 
-export async function listPublishedTopics() {
-  const topics = await Topic.find({ isPublished: true }).sort({ order: 1, name: 1 }).lean()
+export async function listPublicTopics() {
+  const topics = await Topic.find()
+    .select('name slug description')
+    .sort({ name: 1 })
+    .lean()
   const topicIds = topics.map(({ _id }) => _id)
-  const subtopics = await Subtopic.find({ topic: { $in: topicIds }, isPublished: true })
-    .sort({ order: 1, name: 1 })
+  const subtopics = await Subtopic.find({ topic: { $in: topicIds } })
+    .select('topic name slug description')
+    .sort({ name: 1 })
     .lean()
   const groupedSubtopics = new Map()
   for (const subtopic of subtopics) {
@@ -79,7 +83,6 @@ export async function listPublishedTopics() {
       name: subtopic.name,
       slug: subtopic.slug,
       description: subtopic.description,
-      order: subtopic.order,
     })
     groupedSubtopics.set(topicId, items)
   }

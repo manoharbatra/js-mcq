@@ -61,9 +61,8 @@ Use a unique password of at least 12 characters. Admin login issues a short-live
 
 ### Public
 
-- `GET /api/public/topics` — published topics with published subtopics.
-- `GET /api/public/topics/:topicSlug/subtopics/:subtopicSlug/questions` — published questions without answer keys.
-- `POST /api/public/questions/:id/answer` — body `{ "optionIndex": 0 }`; returns correctness and explanation.
+- `GET /api/public/topics` — all topics with their subtopics.
+- `GET /api/public/topics/:topicSlug/subtopics/:subtopicSlug/questions` — short-answer questions, including the answer for the learner UI to reveal.
 
 ### Admin authentication
 
@@ -81,6 +80,7 @@ All paths below require the admin session cookie:
 - `POST /api/admin/topics/:topicId/subtopics`; `PATCH`, `DELETE /api/admin/subtopics/:id`.
 - `GET`, `POST /api/admin/questions`; `PATCH`, `DELETE /api/admin/questions/:id`.
 
-Topic/subtopic/question records start unpublished. Set `isPublished: true` to make them visible publicly. Questions require a topic, its subtopic, title, 2–6 option strings, a zero-based `correctOption`, and explanation. Optional prompt content accepts `{ "kind": "text" | "code" | "json", "value": "..." }` parts, matching the existing learning UI’s mixed prompt style.
+Topics, subtopics, and questions are available publicly as soon as they are created; there is no publish/draft state. Questions require a topic, its subtopic, a title, a short-answer `answer`, and optional prompt content. Optional `mediumUrl` and `compilerUrl` fields accept HTTP(S) links, which the learner app displays as external resources. No answer choices, correctness checks, or manual display ordering are used. Topics and subtopics are listed by name; questions are listed by creation time. Optional prompt content accepts `{ "kind": "text" | "code" | "json", "value": "..." }` parts, matching the learner UI’s mixed prompt style. The public question response includes the answer so the client can reveal it on demand; it is not an answer-submission or grading API.
+
 
 All JSON errors use `{ "error": "..." }`; invalid request details are returned as a `details` array. Topic and subtopic deletion is blocked while child records exist.
