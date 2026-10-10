@@ -57,7 +57,7 @@ export async function listPublicCatalog() {
   const [technologies, sections, topics, questionCounts] = await Promise.all([
     Technology.find({ isActive: true }).select('name slug icon').sort(sortByOrder).lean(),
     Section.find({ isActive: true }).select('technologyId name slug').sort(sortByOrder).lean(),
-    Topic.find({ isActive: true }).select('sectionId name slug').sort(sortByOrder).lean(),
+    Topic.find({ isActive: true }).select('sectionId name slug mediumUrl').sort(sortByOrder).lean(),
     countQuestionsByTopic(),
   ])
   const sectionsByTechnology = groupBy(sections, 'technologyId')
@@ -73,6 +73,7 @@ export async function listPublicCatalog() {
         id: topic._id,
         name: topic.name,
         slug: topic.slug,
+        mediumUrl: topic.mediumUrl ?? '',
         questionCount: questionCounts.get(topic._id.toString()) ?? 0,
       }))
       return {

@@ -1,13 +1,14 @@
 import { z } from 'zod'
 
 const slugSchema = z.string().trim().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-const optionalHttpUrlSchema = z.union([
+const httpUrlOrEmptySchema = z.union([
   z.literal(''),
   z.string().trim().max(2048).url().refine((value) => {
     const protocol = new URL(value).protocol
     return protocol === 'http:' || protocol === 'https:'
   }, 'URL must use HTTP or HTTPS'),
-]).optional().default('')
+])
+const optionalHttpUrlSchema = httpUrlOrEmptySchema.optional().default('')
 const contentPartSchema = z.object({
   kind: z.enum(['text', 'code', 'json']),
   value: z.union([z.string().max(20000), z.record(z.string(), z.unknown())]),
@@ -37,7 +38,9 @@ export const sectionSchema = z.object({
   isActive: z.boolean().optional(),
 }).strict()
 
-export const topicSchema = sectionSchema
+export const topicSchema = sectionSchema.extend({
+  mediumUrl: httpUrlOrEmptySchema.optional(),
+})
 
 // Questions only name their topic; the service derives the technology and section from it.
 const questionFieldsSchema = z.object({

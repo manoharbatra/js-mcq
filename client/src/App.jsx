@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchCatalog } from './api.js'
-import { buildPath, navigate, parseRoute, usePathname } from './router.js'
+import { buildPath, parseRoute, usePathname } from './router.js'
 import { useTheme } from './useTheme.js'
 import { ChevronRight, Menu, Moon, Sun } from 'lucide-react'
 import { Link } from './components/Link.jsx'
 import { Overview } from './components/Overview.jsx'
 import { Sidebar } from './components/Sidebar.jsx'
 import { StatusCard } from './components/StatusCard.jsx'
+import { SectionPage } from './components/SectionPage.jsx'
 import { TopicPage } from './components/TopicPage.jsx'
 import './App.css'
 
@@ -68,12 +69,6 @@ function App() {
   const topic = section?.topics.find(({ slug }) => slug === route.topicSlug) ?? null
   const isHome = !route.technologySlug
 
-  // A section URL opens its first topic, matching the sidebar's section links.
-  const firstTopicSlug = section && !route.topicSlug ? section.topics[0]?.slug : ''
-  useEffect(() => {
-    if (firstTopicSlug) navigate(buildPath(technology.slug, section.slug, firstTopicSlug), { replace: true })
-  }, [firstTopicSlug, technology?.slug, section?.slug])
-
   useEffect(() => {
     document.title = [topic?.name, section?.name, technology?.name, appName].filter(Boolean).join(' · ')
   }, [technology, section, topic])
@@ -98,7 +93,7 @@ function App() {
   }
 
   let page
-  if (status === 'loading' || firstTopicSlug) {
+  if (status === 'loading') {
     page = <StatusCard isLoading message="Loading study topics…" />
   } else if (status === 'error') {
     page = <StatusCard isError title="Couldn’t load practice content" message={error} onRetry={retryCatalog} />
@@ -106,12 +101,12 @@ function App() {
     page = <StatusCard title="Technology not found" message="This technology doesn’t exist or may have been renamed." homeLink />
   } else if (route.sectionSlug && !section) {
     page = <StatusCard title="Section not found" message={`There is no “${route.sectionSlug}” section in ${technology.name}.`} homeLink />
-  } else if (section && !section.topics.length) {
-    page = <StatusCard title="No topics in this section yet" message="Topics will appear here once they’re added." homeLink />
   } else if (route.topicSlug && !topic) {
     page = <StatusCard title="Topic not found" message={`There is no “${route.topicSlug}” topic in ${section.name}.`} homeLink />
   } else if (topic) {
     page = <TopicPage key={topic.id} technology={technology} section={section} topic={topic} />
+  } else if (section) {
+    page = <SectionPage technology={technology} section={section} />
   } else if (technology) {
     page = (
       <Overview

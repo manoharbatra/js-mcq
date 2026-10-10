@@ -148,7 +148,14 @@ const catalogLevels = {
 }
 
 function emptyCatalogItem(kind) {
-  return { name: '', slug: '', ...(kind === 'technology' ? { icon: '' } : {}), order: '', isActive: true }
+  return {
+    name: '',
+    slug: '',
+    ...(kind === 'technology' ? { icon: '' } : {}),
+    ...(kind === 'topic' ? { mediumUrl: '' } : {}),
+    order: '',
+    isActive: true,
+  }
 }
 
 function CatalogPage({ technologies, refresh, notify }) {
@@ -219,6 +226,7 @@ function CatalogLevel({ kind, title, items, selectedId, onSelect, createPath, ba
       name: item.name,
       slug: item.slug,
       ...(kind === 'technology' ? { icon: item.icon ?? '' } : {}),
+      ...(kind === 'topic' ? { mediumUrl: item.mediumUrl ?? '' } : {}),
       order: String(item.order ?? ''),
       isActive: item.isActive !== false,
     } : emptyCatalogItem(kind))
@@ -267,6 +275,7 @@ function CatalogLevel({ kind, title, items, selectedId, onSelect, createPath, ba
             <label className="field field-full"><span>Name</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value, ...(editingId === 'new' ? { slug: slugify(event.target.value) } : {}) })} maxLength={100} required placeholder={placeholder} /></label>
             <label className="field field-full"><span>Slug <small>Used in the learner URL</small></span><input value={form.slug} onChange={(event) => setForm({ ...form, slug: slugify(event.target.value) })} maxLength={100} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required /></label>
             {kind === 'technology' && <label className="field"><span>Icon <small>Optional key</small></span><input value={form.icon} onChange={(event) => setForm({ ...form, icon: slugify(event.target.value) })} maxLength={50} placeholder="javascript" /></label>}
+            {kind === 'topic' && <label className="field field-full"><span>Medium article URL <small>Optional</small></span><input type="url" value={form.mediumUrl} onChange={(event) => setForm({ ...form, mediumUrl: event.target.value })} maxLength={2048} placeholder="https://medium.com/…" /></label>}
             <label className="field"><span>Order <small>Optional</small></span><input type="number" min="0" step="1" value={form.order} onChange={(event) => setForm({ ...form, order: event.target.value })} placeholder="Last" /></label>
             <label className="checkbox-field field-full"><input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} /><span>Visible to learners</span></label>
           </div>
