@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { buildPath } from "../router.js";
+import { buildPath } from '../../router.js';
 import { ChevronDown, House, X } from "lucide-react";
-import { Link } from "./Link.jsx";
+import { Link } from '../link';
+import './Sidebar.css'
 
 export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug, isHome, isOpen, onClose }) {
     const [expandedTechnologies, setExpandedTechnologies] = useState({});

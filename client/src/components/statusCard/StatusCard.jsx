@@ -1,4 +1,5 @@
-import { Link } from './Link.jsx'
+import { Link } from '../link'
+import './StatusCard.css'
 
 export function StatusCard({ title, message, isLoading = false, isError = false, onRetry, homeLink = false }) {
   return (

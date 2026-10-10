@@ -1,0 +1,50 @@
+:root {
+    --membership-bg: #fffbeb;
+    --membership-border: #fde68a;
+    --membership-icon-bg: #fef3c7;
+    --membership-icon: #b45309;
+}
+
+:root[data-theme='dark'] {
+    --membership-bg: rgb(250 204 21 / 8%);
+    --membership-border: rgb(250 204 21 / 28%);
+    --membership-icon-bg: rgb(250 204 21 / 16%);
+    --membership-icon: #fcd34d;
+}
+
+.membership-banner {
+    border-color: var(--membership-border);
+    background: var(--membership-bg);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 18px 20px;
+}
+
+.membership-banner > div {
+    min-width: 200px;
+    flex: 1;
+}
+
+.membership-banner h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+}
+
+.membership-banner p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.membership-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--membership-icon);
+    background: var(--membership-icon-bg);
+}

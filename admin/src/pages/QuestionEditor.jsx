@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { ArrowLeft, Braces, Code2, Trash2, Type, WandSparkles } from 'lucide-react'
 import { firstPlacement } from '../catalog.js'
+import { Switch } from '../components/ui.jsx'
 
 const CodeEditor = lazy(() => import('../CodeEditor.jsx'))
 
@@ -15,6 +16,7 @@ export function QuestionEditor({ form, setForm, technologies, theme, busy, isNew
   const topics = sections.find((section) => section._id === form.sectionId)?.topics ?? []
   const [formattingIndex, setFormattingIndex] = useState(null)
   const [formatError, setFormatError] = useState('')
+  const hasBlocks = form.content.length > 0
 
   function updateContent(index, key, value) {
     setFormatError('')
@@ -53,6 +55,17 @@ export function QuestionEditor({ form, setForm, technologies, theme, busy, isNew
     setForm({ ...form, content: [...form.content, { kind, value: '' }] })
   }
 
+  // Sits under the last block once there is one, so the next block is always added right below it.
+  const addBlockButtons = (
+    <div className="block-buttons">
+      {blockTypes.map(({ kind, label, icon: IconComponent }) => (
+        <button key={kind} className="button button-secondary button-sm" type="button" onClick={() => addContentBlock(kind)} disabled={form.content.length >= 20}>
+          <IconComponent size={15} /> {label}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
     <form className="editor" onSubmit={onSubmit}>
       <header className="editor-header">
@@ -81,13 +94,7 @@ export function QuestionEditor({ form, setForm, technologies, theme, busy, isNew
                 <h2>Question content <span className="optional-tag">Optional</span></h2>
                 <p>Add context, a code snippet or a JSON example. Blocks render in this order.</p>
               </div>
-              <div className="block-buttons">
-                {blockTypes.map(({ kind, label, icon: IconComponent }) => (
-                  <button key={kind} className="button button-secondary button-sm" type="button" onClick={() => addContentBlock(kind)} disabled={form.content.length >= 20}>
-                    <IconComponent size={15} /> {label}
-                  </button>
-                ))}
-              </div>
+              {!hasBlocks && addBlockButtons}
             </div>
             {formatError && <div className="alert alert-error" role="alert">{formatError}</div>}
             {form.content.length > 0 ? (
@@ -142,6 +149,7 @@ export function QuestionEditor({ form, setForm, technologies, theme, busy, isNew
                     </div>
                   )
                 })}
+                {addBlockButtons}
               </div>
             ) : (
               <p className="muted-note">No content blocks. The question title is shown on its own.</p>
@@ -196,6 +204,12 @@ export function QuestionEditor({ form, setForm, technologies, theme, busy, isNew
               <span className="field-label">Online compiler URL <small>Optional</small></span>
               <input type="url" value={form.compilerUrl} onChange={(event) => setForm({ ...form, compilerUrl: event.target.value })} maxLength={2048} placeholder="https://…" />
             </label>
+            <Switch
+              checked={form.isPaid}
+              onChange={(isPaid) => setForm({ ...form, isPaid })}
+              label="Paid"
+              description="On: premium. The Medium link is disabled and learners see a membership prompt."
+            />
           </section>
         </aside>
       </div>

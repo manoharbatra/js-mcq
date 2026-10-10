@@ -1,0 +1,123 @@
+/* Section page: numbered topic index */
+
+.section-page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.topic-index {
+    margin: 0;
+    padding: 8px 22px;
+    list-style: none;
+}
+
+.topic-index-row {
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    gap: 18px;
+}
+
+.topic-index-body {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-self: stretch;
+    align-items: center;
+    gap: 12px;
+}
+
+.topic-index-row + .topic-index-row .topic-index-body {
+    border-top: 1px solid var(--border);
+}
+
+.topic-index-number {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    background: var(--surface-muted);
+    box-shadow: inset 0 0 0 1px var(--border);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.topic-index-row.has-article .topic-index-number {
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    box-shadow: none;
+}
+
+.topic-index-name,
+.topic-index-resource {
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+}
+
+.topic-index-name {
+    min-width: 0;
+    flex: 1;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.topic-index-name:hover {
+    color: var(--accent-text);
+}
+
+.topic-index-resource {
+    flex: none;
+    gap: 10px;
+    color: var(--accent-text);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+a.topic-index-resource:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+    .topic-index {
+        padding: 4px 14px;
+    }
+
+    .topic-index-row,
+    .topic-index-body {
+        gap: 12px;
+    }
+
+    .topic-index-number {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+    }
+
+    .topic-index-name {
+        font-size: 15px;
+    }
+
+    .topic-index-resource {
+        font-size: 0;
+        gap: 0;
+    }
+}
+
+.topic-index-resource.is-disabled {
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
+.topic-index-name.is-disabled {
+    color: var(--muted);
+    cursor: not-allowed;
+}

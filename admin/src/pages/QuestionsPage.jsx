@@ -17,6 +17,7 @@ function emptyQuestion() {
     answer: '',
     mediumUrl: '',
     compilerUrl: '',
+    isPaid: false,
   }
 }
 
@@ -86,6 +87,7 @@ export function QuestionsPage({ technologies, questions, refresh, notify, theme,
       answer: question.answer,
       mediumUrl: question.mediumUrl ?? '',
       compilerUrl: question.compilerUrl ?? '',
+      isPaid: question.isPaid === true,
     })
   }
 

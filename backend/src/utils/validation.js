@@ -32,15 +32,22 @@ export const technologySchema = z.object({
   isActive: z.boolean().optional(),
 }).strict()
 
-export const sectionSchema = z.object({
+const catalogItemFields = {
   name: nameSchema,
   order: orderSchema.optional(),
   isActive: z.boolean().optional(),
+}
+
+export const sectionSchema = z.object({
+  ...catalogItemFields,
+  membershipUrl: httpUrlOrEmptySchema.optional(),
 }).strict()
 
-export const topicSchema = sectionSchema.extend({
+export const topicSchema = z.object({
+  ...catalogItemFields,
   mediumUrl: httpUrlOrEmptySchema.optional(),
-})
+  isPaid: z.boolean().optional(),
+}).strict()
 
 // Questions only name their topic; the service derives the technology and section from it.
 const questionFieldsSchema = z.object({
@@ -51,6 +58,7 @@ const questionFieldsSchema = z.object({
   answer: z.string().trim().min(1).max(10000),
   mediumUrl: optionalHttpUrlSchema,
   compilerUrl: optionalHttpUrlSchema,
+  isPaid: z.boolean().optional(),
 }).strict()
 
 export const questionSchema = questionFieldsSchema
@@ -66,6 +74,19 @@ export const questionOrderSchema = z.object({
       code: 'custom',
       path: ['questionIds'],
       message: 'Question IDs must be unique',
+    })
+  }
+})
+
+export const topicOrderSchema = z.object({
+  sectionId: objectIdSchema,
+  topicIds: z.array(objectIdSchema).min(1).max(1000),
+}).strict().superRefine(({ topicIds }, context) => {
+  if (new Set(topicIds.map((id) => id.toLowerCase())).size !== topicIds.length) {
+    context.addIssue({
+      code: 'custom',
+      path: ['topicIds'],
+      message: 'Topic IDs must be unique',
     })
   }
 })

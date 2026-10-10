@@ -1,0 +1,36 @@
+/* Topic badges */
+
+.topic-badge {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    border-radius: 6px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+.topic-badge-sm {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+}
+
+.topic-badge-md {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+}
+
+.topic-badge-lg {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.tone-0 { color: #3b2f00; background: #f7d23e; }
+.tone-1 { color: #052e4a; background: #61dafb; }
+.tone-2 { color: #ffffff; background: #7c3aed; }
+.tone-3 { color: #ffffff; background: #059669; }
+.tone-4 { color: #ffffff; background: #e11d48; }
+.tone-5 { color: #ffffff; background: #ea580c; }

@@ -5,7 +5,7 @@ import { findPublicTopic } from './catalogService.js'
 
 export async function listQuestions(filter) {
   return Question.find(filter)
-    .select('technologyId sectionId topicId displayOrder title label content answer mediumUrl compilerUrl createdAt updatedAt')
+    .select('technologyId sectionId topicId displayOrder title label content answer mediumUrl compilerUrl isPaid createdAt updatedAt')
     .sort({ displayOrder: 1, createdAt: 1, _id: 1 })
     .lean()
 }
@@ -78,19 +78,23 @@ export async function deleteQuestion(id) {
 
 export async function listPublicQuestions(technologySlug, sectionSlug, topicSlug) {
   const topic = await findPublicTopic(technologySlug, sectionSlug, topicSlug)
+  // A premium topic exposes none of its questions, however the page was reached.
+  if (topic.isPaid === true) return []
 
   const questions = await Question.find({ topicId: topic._id })
-    .select('title label content answer mediumUrl compilerUrl')
+    .select('title label content answer mediumUrl compilerUrl isPaid')
     .sort({ displayOrder: 1, createdAt: 1, _id: 1 })
     .lean()
 
-  return questions.map(({ _id, title, label, content, answer, mediumUrl, compilerUrl }) => ({
+  return questions.map(({ _id, title, label, content, answer, mediumUrl, compilerUrl, isPaid = false }) => ({
     id: _id,
     title,
     label,
     content,
-    answer,
-    mediumUrl,
-    compilerUrl,
+    // Premium content is withheld server-side so it can't be read from the API response.
+    answer: isPaid ? '' : answer,
+    mediumUrl: isPaid ? '' : mediumUrl,
+    compilerUrl: isPaid ? '' : compilerUrl,
+    isPaid,
   }))
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { BookOpen, ChevronRight, EyeOff, FolderTree, Layers, Link2, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react'
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
+import { BookOpen, ChevronRight, EyeOff, FolderTree, GripVertical, Layers, Link2, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react'
 import { apiRequest } from '../api.js'
 import { countLabel } from '../catalog.js'
 import { EmptyState, Modal, PageHeader, Pill, Switch } from '../components/ui.jsx'
@@ -35,7 +36,8 @@ const levels = {
 function formFor(kind, item) {
   return {
     name: item?.name ?? '',
-    ...(kind === 'topic' ? { mediumUrl: item?.mediumUrl ?? '' } : {}),
+    ...(kind === 'topic' ? { mediumUrl: item?.mediumUrl ?? '', isPaid: item?.isPaid === true } : {}),
+    ...(kind === 'section' ? { membershipUrl: item?.membershipUrl ?? '' } : {}),
     order: item ? String(item.order ?? '') : '',
     isActive: item ? item.isActive !== false : true,
   }
@@ -91,12 +93,27 @@ function CatalogEditor({ editing, onClose, onSaved, notify }) {
             <span className="field-hint">Shown as “Medium Link” on the section page when set.</span>
           </label>
         )}
+        {kind === 'section' && (
+          <label className="field">
+            <span className="field-label">Membership URL <small>Optional</small></span>
+            <input type="url" value={form.membershipUrl} onChange={(event) => setForm({ ...form, membershipUrl: event.target.value })} maxLength={2048} placeholder="https://…" />
+            <span className="field-hint">“Buy Membership” opens this link for every topic in this section.</span>
+          </label>
+        )}
         <div className="field-row">
           <label className="field">
             <span className="field-label">Order <small>Optional</small></span>
             <input type="number" min="0" step="1" value={form.order} onChange={(event) => setForm({ ...form, order: event.target.value })} placeholder="Add to end" />
           </label>
         </div>
+        {kind === 'topic' && (
+          <Switch
+            checked={form.isPaid}
+            onChange={(isPaid) => setForm({ ...form, isPaid })}
+            label="Paid"
+            description="On: premium. The Medium link is disabled and learners see a membership prompt."
+          />
+        )}
         <Switch
           checked={form.isActive}
           onChange={(isActive) => setForm({ ...form, isActive })}
@@ -114,9 +131,17 @@ function CatalogEditor({ editing, onClose, onSaved, notify }) {
   )
 }
 
-function CatalogColumn({ kind, title, subtitle, items, selectedId, onSelect, onAdd, onEdit, onDelete, describe, renderExtra, emptyDetail, disabledReason }) {
+function CatalogColumn({ kind, title, subtitle, items, selectedId, onSelect, onAdd, onEdit, onDelete, onReorder, describe, renderExtra, emptyDetail, disabledReason }) {
   const level = levels[kind]
   const LevelIcon = level.icon
+
+  function handleDragEnd({ source, destination }) {
+    if (!onReorder || !destination || destination.index === source.index) return
+    const reordered = [...items]
+    const [moved] = reordered.splice(source.index, 1)
+    reordered.splice(destination.index, 0, moved)
+    onReorder(reordered.map((item) => item._id))
+  }
 
   return (
     <section className="panel catalog-column" aria-label={title}>
@@ -134,38 +159,58 @@ function CatalogColumn({ kind, title, subtitle, items, selectedId, onSelect, onA
         {disabledReason ? (
           <EmptyState icon={LevelIcon} title={disabledReason} />
         ) : items.length ? (
-          <ul className="catalog-list">
-            {items.map((item) => {
-              const isSelected = item._id === selectedId
-              const content = (
-                <>
-                  <span className="catalog-order">{item.order}</span>
-                  <span className="catalog-text">
-                    <strong>{item.name}</strong>
-                    <span className="catalog-meta">
-                      <span>/{item.slug}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{describe(item)}</span>
-                    </span>
-                  </span>
-                  {item.isActive === false && <Pill tone="muted" icon={EyeOff}>Hidden</Pill>}
-                  {renderExtra?.(item)}
-                  {onSelect && <ChevronRight size={18} className="catalog-chevron" />}
-                </>
-              )
-              return (
-                <li key={item._id} className={`catalog-item ${isSelected ? 'is-selected' : ''}`}>
-                  {onSelect
-                    ? <button className="catalog-item-main" type="button" onClick={() => onSelect(item._id)} aria-pressed={isSelected}>{content}</button>
-                    : <div className="catalog-item-main">{content}</div>}
-                  <div className="catalog-actions">
-                    <button className="icon-button" type="button" onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`} title="Edit"><Pencil size={16} /></button>
-                    <button className="icon-button icon-button-danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.name}`} title="Delete"><Trash2 size={16} /></button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId={`catalog-${kind}`} isDropDisabled={!onReorder}>
+              {(dropProvided) => (
+                <ul className="catalog-list" ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+                  {items.map((item, index) => {
+                    const isSelected = item._id === selectedId
+                    const content = (
+                      <>
+                        <span className="catalog-order">{item.order}</span>
+                        <span className="catalog-text">
+                          <strong>{item.name}</strong>
+                          <span className="catalog-meta">
+                            <span>/{item.slug}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{describe(item)}</span>
+                          </span>
+                        </span>
+                        {item.isActive === false && <Pill tone="muted" icon={EyeOff}>Hidden</Pill>}
+                        {renderExtra?.(item)}
+                        {onSelect && <ChevronRight size={18} className="catalog-chevron" />}
+                      </>
+                    )
+                    return (
+                      <Draggable key={item._id} draggableId={item._id} index={index} isDragDisabled={!onReorder}>
+                        {(dragProvided, snapshot) => (
+                          <li
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            className={`catalog-item ${isSelected ? 'is-selected' : ''} ${snapshot.isDragging ? 'is-dragging' : ''}`}
+                          >
+                            {onReorder && (
+                              <span className="catalog-drag-handle" {...dragProvided.dragHandleProps} title="Drag to reorder">
+                                <GripVertical size={16} />
+                              </span>
+                            )}
+                            {onSelect
+                              ? <button className="catalog-item-main" type="button" onClick={() => onSelect(item._id)} aria-pressed={isSelected}>{content}</button>
+                              : <div className="catalog-item-main">{content}</div>}
+                            <div className="catalog-actions">
+                              <button className="icon-button" type="button" onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`} title="Edit"><Pencil size={16} /></button>
+                              <button className="icon-button icon-button-danger" type="button" onClick={() => onDelete(item)} aria-label={`Delete ${item.name}`} title="Delete"><Trash2 size={16} /></button>
+                            </div>
+                          </li>
+                        )}
+                      </Draggable>
+                    )
+                  })}
+                  {dropProvided.placeholder}
+                </ul>
+              )}
+            </Droppable>
+          </DragDropContext>
         ) : (
           <EmptyState icon={LevelIcon} title={`No ${level.plural} yet`} detail={emptyDetail} />
         )}
@@ -178,10 +223,30 @@ export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) 
   const [technologyId, setTechnologyId] = useState('')
   const [sectionId, setSectionId] = useState('')
   const [editing, setEditing] = useState(null)
+  const [topicOrder, setTopicOrder] = useState(null)
   const confirm = useConfirm()
   const technology = technologies.find((item) => item._id === technologyId) ?? technologies[0] ?? null
   const sections = technology?.sections ?? []
   const section = sections.find((item) => item._id === sectionId) ?? sections[0] ?? null
+
+  const savedTopics = section?.topics ?? []
+  // Show the dropped order immediately while the save request is in flight.
+  const topics = topicOrder && topicOrder.sectionId === section?._id
+    ? topicOrder.ids.map((id) => savedTopics.find((topic) => topic._id === id)).filter(Boolean)
+    : savedTopics
+
+  async function reorderTopics(topicIds) {
+    setTopicOrder({ sectionId: section._id, ids: topicIds })
+    try {
+      await apiRequest('/admin/topics/reorder', { method: 'PATCH', body: { sectionId: section._id, topicIds } })
+      await refresh()
+      notify('Topic order saved.')
+    } catch (error) {
+      notify(error.message, 'error')
+    } finally {
+      setTopicOrder(null)
+    }
+  }
 
   // What still has to be removed before this item can be deleted (the API enforces the same rule).
   function blockingChildren(kind, item) {
@@ -265,7 +330,8 @@ export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) 
           kind="topic"
           title="Topics"
           subtitle={section ? `In ${section.name}` : 'Choose a section'}
-          items={section?.topics ?? []}
+          items={topics}
+          onReorder={reorderTopics}
           onAdd={() => setEditing({ kind: 'topic', item: null, parentId: section._id })}
           onEdit={(item) => setEditing({ kind: 'topic', item })}
           onDelete={(item) => remove('topic', item)}

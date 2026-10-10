@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, Eye, EyeOff } from 'lucide-react'
-import { Prompt } from './PromptBlocks.jsx'
+import { Prompt } from '../promptBlocks'
+import './QuestionPanel.css'
 
 export function QuestionPanel({ question, number, total }) {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false)
@@ -21,6 +22,8 @@ export function QuestionPanel({ question, number, total }) {
         <button
           className="button button-primary reveal-button"
           type="button"
+          disabled={question.isPaid === true}
+          title={question.isPaid === true ? 'Premium content' : undefined}
           aria-expanded="false"
           aria-controls={answerId}
           onClick={() => setIsAnswerVisible(true)}

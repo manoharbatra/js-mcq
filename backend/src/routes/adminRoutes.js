@@ -7,6 +7,7 @@ import {
   questionUpdateSchema,
   sectionSchema,
   technologySchema,
+  topicOrderSchema,
   topicSchema,
 } from '../utils/validation.js'
 import * as catalogService from '../services/catalogService.js'
@@ -52,6 +53,12 @@ adminRouter.delete('/sections/:id', asyncHandler(async (req, res) => {
 adminRouter.post('/sections/:sectionId/topics', asyncHandler(async (req, res) => {
   const topic = await catalogService.createTopic(req.params.sectionId, topicSchema.parse(req.body))
   res.status(201).json({ topic })
+}))
+
+adminRouter.patch('/topics/reorder', asyncHandler(async (req, res) => {
+  const { sectionId, topicIds } = topicOrderSchema.parse(req.body)
+  const topics = await catalogService.reorderTopics(sectionId, topicIds)
+  res.json({ topics })
 }))
 
 adminRouter.patch('/topics/:id', asyncHandler(async (req, res) => {

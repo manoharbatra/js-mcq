@@ -1,3 +1,4 @@
+import './TopicBadge.css'
 const toneCount = 6
 
 function getInitials(name) {

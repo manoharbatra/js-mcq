@@ -1,4 +1,4 @@
-import { navigate } from '../router.js'
+import { navigate } from '../../router.js'
 
 export function Link({ to, onClick, ...props }) {
   function handleClick(event) {

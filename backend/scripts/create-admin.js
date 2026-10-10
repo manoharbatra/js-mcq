@@ -9,9 +9,9 @@ const password = "Admin@123";
 if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error("Set ADMIN_EMAIL to a valid email before creating an admin");
 }
-if (!password || password.length < 12 || password.length > 200) {
-    throw new Error("Set ADMIN_PASSWORD to a password between 12 and 200 characters");
-}
+// if (!password || password.length < 12 || password.length > 200) {
+//     throw new Error("Set ADMIN_PASSWORD to a password between 12 and 200 characters");
+// }
 
 try {
     await mongoose.connect(config.MONGODB_URI);

@@ -55,11 +55,12 @@ export async function listCatalogForAdmin() {
 }
 
 export async function listPublicCatalog() {
-  const [technologies, sections, topics, questionCounts] = await Promise.all([
+  const [technologies, sections, topics, questionCounts, paidQuestionCounts] = await Promise.all([
     Technology.find({ isActive: true }).select('name slug').sort(sortByOrder).lean(),
-    Section.find({ isActive: true }).select('technologyId name slug').sort(sortByOrder).lean(),
-    Topic.find({ isActive: true }).select('sectionId name slug mediumUrl').sort(sortByOrder).lean(),
+    Section.find({ isActive: true }).select('technologyId name slug membershipUrl').sort(sortByOrder).lean(),
+    Topic.find({ isActive: true }).select('sectionId name slug mediumUrl isPaid').sort(sortByOrder).lean(),
     countQuestionsByTopic(),
+    countQuestionsByTopic({ isPaid: true }),
   ])
   const sectionsByTechnology = groupBy(sections, 'technologyId')
   const topicsBySection = groupBy(topics, 'sectionId')
@@ -73,13 +74,17 @@ export async function listPublicCatalog() {
         id: topic._id,
         name: topic.name,
         slug: topic.slug,
-        mediumUrl: topic.mediumUrl ?? '',
+        isPaid: topic.isPaid === true,
+        hasPaidQuestions: (paidQuestionCounts.get(topic._id.toString()) ?? 0) > 0,
+        // Withheld server-side for locked topics so it can't be read from the response.
+        mediumUrl: topic.isPaid === true ? '' : topic.mediumUrl ?? '',
         questionCount: questionCounts.get(topic._id.toString()) ?? 0,
       }))
       return {
         id: section._id,
         name: section.name,
         slug: section.slug,
+        membershipUrl: section.membershipUrl ?? '',
         questionCount: sectionTopics.reduce((sum, topic) => sum + topic.questionCount, 0),
         topics: sectionTopics,
       }
@@ -93,7 +98,7 @@ export async function findPublicTopic(technologySlug, sectionSlug, topicSlug) {
   if (!technology) throw new HttpError(404, 'Technology not found')
   const section = await Section.findOne({ technologyId: technology._id, slug: sectionSlug, isActive: true }).select('_id').lean()
   if (!section) throw new HttpError(404, 'Section not found')
-  const topic = await Topic.findOne({ sectionId: section._id, slug: topicSlug, isActive: true }).select('_id').lean()
+  const topic = await Topic.findOne({ sectionId: section._id, slug: topicSlug, isActive: true }).select('_id isPaid').lean()
   if (!topic) throw new HttpError(404, 'Topic not found')
   return topic
 }
@@ -189,4 +194,25 @@ export async function deleteTopic(id) {
   }
   const topic = await Topic.findByIdAndDelete(id)
   if (!topic) throw new HttpError(404, 'Topic not found')
+}
+
+// Rewrites the order of every topic in a section to match the given sequence.
+export async function reorderTopics(sectionId, topicIds) {
+  const topics = await Topic.find({ sectionId }).select('_id').lean()
+  if (topics.length !== topicIds.length) {
+    throw new HttpError(400, 'The order must include every topic in the selected section')
+  }
+
+  const existingIds = new Set(topics.map(({ _id }) => _id.toString()))
+  if (topicIds.some((id) => !existingIds.has(id.toLowerCase()))) {
+    throw new HttpError(400, 'The order contains a topic outside the selected section')
+  }
+
+  await Topic.bulkWrite(topicIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: id, sectionId },
+      update: { $set: { order: index + 1 } },
+    },
+  })))
+  return Topic.find({ sectionId }).sort(sortByOrder).lean()
 }

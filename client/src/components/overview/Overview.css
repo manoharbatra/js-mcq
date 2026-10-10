@@ -1,0 +1,93 @@
+.overview {
+    max-width: 1320px;
+    margin: 0 auto;
+}
+
+.topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: 20px;
+}
+
+.topic-card {
+    padding: 22px;
+}
+
+.topic-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.topic-card-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.topic-card-count {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.topic-card-description {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.subtopic-links {
+    display: grid;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.subtopic-links a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 150ms ease, background 150ms ease;
+}
+
+.subtopic-links a:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.subtopic-links a .lucide {
+    color: var(--muted);
+}
+
+.subtopic-link-text {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.subtopic-link-text strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.subtopic-link-text small {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.empty-note {
+    margin: 16px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+}

@@ -20,6 +20,8 @@ const questionSchema = new mongoose.Schema(
     answer: { type: String, required: true, trim: true, maxlength: 10000 },
     mediumUrl: { type: String, trim: true, maxlength: 2048, default: '' },
     compilerUrl: { type: String, trim: true, maxlength: 2048, default: '' },
+    // true: premium content (medium link withheld, membership prompt shown); false: free.
+    isPaid: { type: Boolean, required: true, default: false },
   },
   { timestamps: true },
 )

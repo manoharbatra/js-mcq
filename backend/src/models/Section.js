@@ -5,6 +5,8 @@ const sectionSchema = new mongoose.Schema(
     technologyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Technology', required: true, index: true },
     name: { type: String, required: true, trim: true, maxlength: 100 },
     slug: { type: String, required: true, trim: true, lowercase: true, maxlength: 100 },
+    // Where the "Buy Membership" button sends learners for every topic in this section.
+    membershipUrl: { type: String, trim: true, maxlength: 2048, default: '' },
     order: { type: Number, required: true, min: 0, default: 0 },
     isActive: { type: Boolean, required: true, default: true },
   },

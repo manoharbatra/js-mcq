@@ -1,0 +1,161 @@
+.prompt-parts {
+    display: grid;
+    gap: 16px;
+}
+
+.prompt-text {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+/* Code blocks */
+
+.code-frame {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--code-bg);
+}
+
+.code-frame-header {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 10px 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--code-header);
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.code-frame-label {
+    font-weight: 500;
+}
+
+.code-frame-actions {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+}
+
+.code-frame-error {
+    overflow: hidden;
+    color: var(--danger-text);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.code-frame-button {
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.code-frame-button:hover:not(:disabled) {
+    border-color: var(--border-strong);
+}
+
+.code-frame-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.code-frame-body {
+    display: flex;
+    min-width: 0;
+}
+
+.code-gutter,
+.code-content {
+    margin: 0;
+    padding: 14px 0;
+    font: 14px/1.75 'JetBrains Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+}
+
+.code-gutter {
+    flex: none;
+    min-width: 48px;
+    padding-inline: 14px 12px;
+    border-right: 1px solid var(--border);
+    color: var(--gutter);
+    text-align: right;
+    user-select: none;
+}
+
+.code-content {
+    min-width: 0;
+    flex: 1;
+    overflow-x: auto;
+    padding-inline: 18px;
+    color: var(--code-text);
+    white-space: pre;
+}
+
+.code-content code {
+    font: inherit;
+}
+
+.code-content .hljs-keyword,
+.code-content .hljs-literal {
+    color: var(--syntax-keyword);
+}
+
+.code-content .hljs-title,
+.code-content .hljs-title.function_ {
+    color: var(--syntax-title);
+}
+
+.code-content .hljs-built_in,
+.code-content .hljs-variable.language_ {
+    color: var(--syntax-builtin);
+}
+
+.code-content .hljs-string,
+.code-content .hljs-regexp {
+    color: var(--syntax-string);
+}
+
+.code-content .hljs-number {
+    color: var(--syntax-number);
+}
+
+.code-content .hljs-comment {
+    color: var(--syntax-comment);
+    font-style: italic;
+}
+
+.code-content .hljs-attr,
+.code-content .hljs-property {
+    color: var(--syntax-attr);
+}
+
+@media (max-width: 560px) {
+    .code-gutter,
+    .code-content {
+        font-size: 12.5px;
+    }
+
+    .code-gutter {
+        min-width: 38px;
+        padding-inline: 8px;
+    }
+
+    .code-content {
+        padding-inline: 12px;
+    }
+}

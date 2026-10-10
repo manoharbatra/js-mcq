@@ -682,3 +682,14 @@ button.catalog-item-main { cursor: pointer; }
 .confirm-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px 22px; }
 .button-danger { color: #fff; background: var(--danger); box-shadow: var(--shadow-sm); }
 .button-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, #000); }
+.catalog-drag-handle {
+  display: grid;
+  width: 28px;
+  align-self: stretch;
+  flex: none;
+  place-items: center;
+  color: var(--faint);
+  cursor: grab;
+}
+.catalog-drag-handle:hover { color: var(--text-2); }
+.catalog-item.is-dragging { border-color: var(--accent); background: var(--surface); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }

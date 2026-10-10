@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchQuestions } from '../api.js'
-import { buildPath } from '../router.js'
-import { BookOpen, ExternalLink, Layers, List } from 'lucide-react'
-import { Link } from './Link.jsx'
-import { QuestionPanel } from './QuestionPanel.jsx'
-import { StatusCard } from './StatusCard.jsx'
+import { fetchQuestions } from '../../api.js'
+import { buildPath } from '../../router.js'
+import { BookOpen, ExternalLink, Layers, List, Lock } from 'lucide-react'
+import { Link } from '../link'
+import { MembershipBanner } from '../membershipBanner'
+import { QuestionPanel } from '../questionPanel'
+import { StatusCard } from '../statusCard'
+import './TopicPage.css'
 
 function RailCard({ icon: IconComponent, title, children }) {
   return (
@@ -72,6 +74,8 @@ export function TopicPage({ technology, section, topic }) {
   }
 
   const activeQuestion = questions[Math.min(activeNumber, total) - 1]
+  // The footer appears when the topic itself or any of its questions is premium.
+  const hasLockedContent = topic.isPaid === true || questions.some((question) => question.isPaid === true)
 
   return (
     <div className="question-layout">
@@ -87,6 +91,8 @@ export function TopicPage({ technology, section, topic }) {
           <StatusCard isLoading message="Loading questions…" />
         ) : status === 'error' ? (
           <StatusCard isError title="Couldn’t load questions" message={error} onRetry={retry} />
+        ) : topic.isPaid === true ? (
+          <StatusCard title="Premium topic" message="Buy membership to see the questions and answers in this topic." />
         ) : !total ? (
           <StatusCard title="No questions in this topic yet" message="Questions will appear here once they’re added." />
         ) : (
@@ -96,6 +102,9 @@ export function TopicPage({ technology, section, topic }) {
             ))}
           </div>
         )}
+        {status === 'ready' && hasLockedContent && (
+          <MembershipBanner url={section.membershipUrl} />
+        )}
       </div>
 
       <aside className="rail" aria-label={`${topic.name} navigation`}>
@@ -103,6 +112,20 @@ export function TopicPage({ technology, section, topic }) {
           <ul className="rail-list">
             {section.topics.map((item) => {
               const isCurrent = item.slug === topic.slug
+              const content = (
+                <>
+                  <span className="rail-dot" />
+                  <span className="rail-link-text">{item.name}</span>
+                  <span className="rail-count">{isCurrent && status === 'ready' && !topic.isPaid ? total : item.questionCount}</span>
+                </>
+              )
+              if (item.isPaid === true && !isCurrent) {
+                return (
+                  <li key={item.id}>
+                    <span className="rail-link is-disabled" aria-disabled="true">{content}</span>
+                  </li>
+                )
+              }
               return (
                 <li key={item.id}>
                   <Link
@@ -110,9 +133,7 @@ export function TopicPage({ technology, section, topic }) {
                     to={buildPath(technology.slug, section.slug, item.slug)}
                     aria-current={isCurrent ? 'page' : undefined}
                   >
-                    <span className="rail-dot" />
-                    <span className="rail-link-text">{item.name}</span>
-                    <span className="rail-count">{isCurrent && status === 'ready' ? total : item.questionCount}</span>
+                    {content}
                   </Link>
                 </li>
               )
@@ -120,17 +141,23 @@ export function TopicPage({ technology, section, topic }) {
           </ul>
         </RailCard>
 
-        {activeQuestion && (activeQuestion.mediumUrl || activeQuestion.compilerUrl) && (
+        {activeQuestion && (activeQuestion.mediumUrl || activeQuestion.compilerUrl || activeQuestion.isPaid === true) && (
           <RailCard icon={BookOpen} title="Concept Resources">
             <ul className="rail-list">
-              {activeQuestion.mediumUrl && (
+              {activeQuestion.isPaid === true ? (
+                <li>
+                  <span className="resource-link is-disabled" aria-disabled="true">
+                    <span>Buy membership to see premium content</span><Lock size={16} />
+                  </span>
+                </li>
+              ) : activeQuestion.mediumUrl && (
                 <li>
                   <a className="resource-link" href={activeQuestion.mediumUrl} target="_blank" rel="noopener noreferrer">
                     <span>Read the concept article</span><ExternalLink size={16} />
                   </a>
                 </li>
               )}
-              {activeQuestion.compilerUrl && (
+              {activeQuestion.compilerUrl && activeQuestion.isPaid !== true && (
                 <li>
                   <a className="resource-link" href={activeQuestion.compilerUrl} target="_blank" rel="noopener noreferrer">
                     <span>Practice in the compiler</span><ExternalLink size={16} />

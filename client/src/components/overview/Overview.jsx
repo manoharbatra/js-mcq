@@ -1,7 +1,8 @@
 import { ChevronRight } from 'lucide-react'
-import { Link } from './Link.jsx'
-import { StatusCard } from './StatusCard.jsx'
-import { TopicBadge } from './TopicBadge.jsx'
+import { Link } from '../link'
+import { StatusCard } from '../statusCard'
+import { TopicBadge } from '../topicBadge'
+import './Overview.css'
 
 // A grid of cards, each listing links one level down (home: technologies › sections, technology: sections › topics).
 export function Overview({ title, description, cards, emptyTitle, emptyMessage }) {
