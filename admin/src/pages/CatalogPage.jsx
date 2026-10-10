@@ -3,6 +3,7 @@ import { BookOpen, ChevronRight, EyeOff, FolderTree, Layers, Link2, ListChecks, 
 import { apiRequest } from '../api.js'
 import { countLabel } from '../catalog.js'
 import { EmptyState, Modal, PageHeader, Pill, Switch } from '../components/ui.jsx'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 
 const levels = {
   technology: {
@@ -177,13 +178,36 @@ export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) 
   const [technologyId, setTechnologyId] = useState('')
   const [sectionId, setSectionId] = useState('')
   const [editing, setEditing] = useState(null)
+  const confirm = useConfirm()
   const technology = technologies.find((item) => item._id === technologyId) ?? technologies[0] ?? null
   const sections = technology?.sections ?? []
   const section = sections.find((item) => item._id === sectionId) ?? sections[0] ?? null
 
+  // What still has to be removed before this item can be deleted (the API enforces the same rule).
+  function blockingChildren(kind, item) {
+    if (kind === 'technology' && item.sections.length) return countLabel(item.sections.length, 'section')
+    if (kind === 'section' && item.topics.length) return countLabel(item.topics.length, 'topic')
+    if (kind === 'topic' && item.questionCount) return countLabel(item.questionCount, 'question')
+    return ''
+  }
+
   async function remove(kind, item) {
     const level = levels[kind]
-    if (!window.confirm(`Delete “${item.name}”? A ${level.label.toLowerCase()} that still contains content cannot be deleted.`)) return
+    const children = blockingChildren(kind, item)
+    if (children) {
+      await confirm({
+        blocked: true,
+        title: `“${item.name}” can’t be deleted yet`,
+        message: `It still contains ${children}. Delete or move ${children.startsWith('1 ') ? 'it' : 'them'} first, then try again.`,
+      })
+      return
+    }
+    const confirmed = await confirm({
+      title: `Delete ${level.label.toLowerCase()} “${item.name}”?`,
+      message: `This permanently removes the ${level.label.toLowerCase()} from the learner catalog. This can’t be undone.`,
+      confirmLabel: `Delete ${level.label.toLowerCase()}`,
+    })
+    if (!confirmed) return
     try {
       await apiRequest(`${level.basePath}/${item._id}`, { method: 'DELETE' })
       await refresh()

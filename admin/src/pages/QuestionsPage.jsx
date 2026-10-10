@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Code2, FileQuestion, GripVertical, Link2, Pencil, P
 import { apiRequest } from '../api.js'
 import { firstPlacement, indexCatalog, nameOf } from '../catalog.js'
 import { EmptyState, PageHeader, Pill } from '../components/ui.jsx'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 import { QuestionEditor } from './QuestionEditor.jsx'
 
 function emptyQuestion() {
@@ -32,6 +33,7 @@ export function QuestionsPage({ technologies, questions, refresh, notify, theme,
   const [dragOverQuestionId, setDragOverQuestionId] = useState(null)
   const [isReordering, setIsReordering] = useState(false)
   const draggedQuestionRef = useRef(null)
+  const confirm = useConfirm()
 
   const catalogIndex = useMemo(() => indexCatalog(technologies), [technologies])
   const availableSections = catalogIndex.technologyById.get(technologyFilter)?.sections ?? []
@@ -109,7 +111,12 @@ export function QuestionsPage({ technologies, questions, refresh, notify, theme,
   }
 
   async function deleteQuestion(question) {
-    if (!window.confirm(`Delete this question: “${question.title}”?`)) return
+    const confirmed = await confirm({
+      title: 'Delete this question?',
+      message: `“${question.title}” will be permanently removed from the library. This can’t be undone.`,
+      confirmLabel: 'Delete question',
+    })
+    if (!confirmed) return
     try {
       await apiRequest(`/admin/questions/${question._id}`, { method: 'DELETE' })
       await refresh()
