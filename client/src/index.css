@@ -10,6 +10,12 @@
   color-scheme: light;
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  color: #e5eaf1;
+  background: #111821;
+}
+
 * { box-sizing: border-box; }
 
 html { min-width: 320px; min-height: 100%; }
@@ -18,6 +24,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: #f3f6f9;
+}
+
+:root[data-theme='dark'] body {
+  background: #111821;
 }
 
 button:focus-visible, a:focus-visible, textarea:focus-visible {

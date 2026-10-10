@@ -1,5 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import hljs from 'highlight.js/lib/core'
+import javascript from 'highlight.js/lib/languages/javascript'
+import json from 'highlight.js/lib/languages/json'
+import { useTheme } from './useTheme.js'
 import './App.css'
+
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('json', json)
 
 async function getPublicData(path) {
   const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api'
@@ -17,6 +24,10 @@ function JsonBlock({ value }) {
   const initialJson = typeof value === 'string' ? value : JSON.stringify(value)
   const [jsonText, setJsonText] = useState(initialJson)
   const [hasFormatError, setHasFormatError] = useState(false)
+  const highlightedJson = useMemo(
+    () => hljs.highlight(jsonText, { language: 'json', ignoreIllegals: true }).value,
+    [jsonText],
+  )
 
   function formatJson() {
     try {
@@ -33,15 +44,21 @@ function JsonBlock({ value }) {
         {hasFormatError && <span className="prompt-format-error" role="status">Invalid JSON</span>}
         <button className="prompt-format-button" type="button" onClick={formatJson}>Format JSON</button>
       </div>
-      <pre className="prompt-json"><code>{jsonText}</code></pre>
+      <pre className="prompt-json"><code dangerouslySetInnerHTML={{ __html: highlightedJson }} /></pre>
     </div>
   )
 }
 
 function CodeBlock({ value }) {
-  const [codeText, setCodeText] = useState(value)
-  const [hasFormatError, setHasFormatError] = useState(false)
+  const [formattedCode, setFormattedCode] = useState({ source: value, text: value })
+  const [formatErrorState, setFormatError] = useState({ source: value, message: '' })
   const [isFormatting, setIsFormatting] = useState(false)
+  const codeText = formattedCode.source === value ? formattedCode.text : value
+  const formatError = formatErrorState.source === value ? formatErrorState.message : ''
+  const highlightedCode = useMemo(
+    () => hljs.highlight(codeText, { language: 'javascript', ignoreIllegals: true }).value,
+    [codeText],
+  )
 
   async function formatCode() {
     setIsFormatting(true)
@@ -54,13 +71,14 @@ function CodeBlock({ value }) {
       const formattedCode = await prettier.format(codeText, {
         parser: 'babel',
         plugins: [babelPlugin, estreePlugin],
-        semi: false,
+        semi: true,
         singleQuote: true,
       })
-      setCodeText(formattedCode)
-      setHasFormatError(false)
-    } catch {
-      setHasFormatError(true)
+      setFormattedCode({ source: value, text: formattedCode })
+      setFormatError({ source: value, message: '' })
+    } catch (error) {
+      const message = error instanceof Error ? `Unable to format code: ${error.message}` : 'Unable to format code.'
+      setFormatError({ source: value, message })
     } finally {
       setIsFormatting(false)
     }
@@ -69,12 +87,12 @@ function CodeBlock({ value }) {
   return (
     <div className="formatted-prompt">
       <div className="prompt-toolbar">
-        {hasFormatError && <span className="prompt-format-error" role="status">Unable to format code</span>}
+        {formatError && <span className="prompt-format-error" role="status" title={formatError}>Unable to format code</span>}
         <button className="prompt-format-button" type="button" onClick={formatCode} disabled={isFormatting}>
           {isFormatting ? 'Formatting...' : 'Format Code'}
         </button>
       </div>
-      <pre className="prompt-code"><code>{codeText}</code></pre>
+      <pre className="prompt-code"><code dangerouslySetInnerHTML={{ __html: highlightedCode }} /></pre>
     </div>
   )
 }
@@ -124,6 +142,7 @@ function QuestionCard({ question, index, total }) {
 }
 
 function App() {
+  const [theme, toggleTheme] = useTheme()
   const [topics, setTopics] = useState([])
   const [activeTopicId, setActiveTopicId] = useState('')
   const [activeSubtopicId, setActiveSubtopicId] = useState('')
@@ -229,7 +248,7 @@ function App() {
       </aside>
 
       <main className="main-content" id="top">
-        <header className="topbar"><div className="breadcrumbs"><span>Study topics</span>{selectedTopic && <><span className="crumb-divider">/</span><span>{selectedTopic.name}</span></>}{selectedSubtopic && <><span className="crumb-divider">/</span><span>{selectedSubtopic.name}</span></>}</div><span className="topbar-note">SHORT ANSWER <span>·</span></span></header>
+        <header className="topbar"><div className="breadcrumbs"><span>Study topics</span>{selectedTopic && <><span className="crumb-divider">/</span><span>{selectedTopic.name}</span></>}{selectedSubtopic && <><span className="crumb-divider">/</span><span>{selectedSubtopic.name}</span></>}</div><div className="topbar-actions"><span className="topbar-note">SHORT ANSWER <span>·</span></span><button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? '☀' : '☾'}</button></div></header>
         <section className="workspace">
           {loadError ? (
             <div className="client-state client-error" role="alert">

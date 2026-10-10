@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiRequest, encodeQuery } from './api.js'
+import { useTheme } from './useTheme.js'
+
+const CodeEditor = lazy(() => import('./CodeEditor.jsx'))
 
 const navigation = [
   { id: 'overview', label: 'Overview', icon: '◫' },
@@ -25,7 +28,7 @@ function ErrorNotice({ children, onDismiss }) {
   )
 }
 
-function Login({ onLogin }) {
+function Login({ onLogin, theme, toggleTheme }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -46,6 +49,7 @@ function Login({ onLogin }) {
 
   return (
     <main className="login-shell">
+      <button className="theme-toggle login-theme-toggle" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? '☀' : '☾'}</button>
       <section className="login-card">
         <div className="login-mark">JS</div>
         <p className="eyebrow">CONTENT CONTROL CENTER</p>
@@ -300,7 +304,7 @@ function SubtopicForm({ form, setForm, isNew, busy, onCancel, onSubmit }) {
   </form>
 }
 
-function QuestionsPage({ topics, questions, refresh, notify, createOnLoad }) {
+function QuestionsPage({ topics, questions, refresh, notify, createOnLoad, theme }) {
   const [topicFilter, setTopicFilter] = useState('')
   const [subtopicFilter, setSubtopicFilter] = useState('')
   const [editingId, setEditingId] = useState(null)
@@ -383,6 +387,7 @@ function QuestionsPage({ topics, questions, refresh, notify, createOnLoad }) {
         form={form}
         setForm={setForm}
         topics={topics}
+        theme={theme}
         busy={busy}
         isNew={editingId === 'new'}
         onCancel={() => setEditingId(null)}
@@ -423,7 +428,7 @@ function emptyQuestion() {
   }
 }
 
-function QuestionForm({ form, setForm, topics, busy, isNew, onCancel, onSubmit }) {
+function QuestionForm({ form, setForm, topics, theme, busy, isNew, onCancel, onSubmit }) {
   const activeTopic = topics.find((topic) => topic._id === form.topic)
   const subtopics = activeTopic?.subtopics ?? []
   const [formattingIndex, setFormattingIndex] = useState(null)
@@ -431,10 +436,10 @@ function QuestionForm({ form, setForm, topics, busy, isNew, onCancel, onSubmit }
 
   function updateContent(index, key, value) {
     setFormatError('')
-    setForm({
-      ...form,
-      content: form.content.map((part, partIndex) => partIndex === index ? { ...part, [key]: value } : part),
-    })
+    setForm((currentForm) => ({
+      ...currentForm,
+      content: currentForm.content.map((part, partIndex) => partIndex === index ? { ...part, [key]: value } : part),
+    }))
   }
 
   async function formatCode(index, code) {
@@ -449,12 +454,13 @@ function QuestionForm({ form, setForm, topics, busy, isNew, onCancel, onSubmit }
       const formattedCode = await prettier.format(code, {
         parser: 'babel',
         plugins: [babelPlugin, estreePlugin],
-        semi: false,
+        semi: true,
         singleQuote: true,
       })
       updateContent(index, 'value', formattedCode)
-    } catch {
-      setFormatError(`Unable to format code block ${index + 1}. Check that it contains valid JavaScript.`)
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Unknown formatting error.'
+      setFormatError(`Unable to format code block ${index + 1}: ${reason}`)
     } finally {
       setFormattingIndex(null)
     }
@@ -483,7 +489,18 @@ function QuestionForm({ form, setForm, topics, busy, isNew, onCancel, onSubmit }
             <select aria-label={`Block ${index + 1} type`} value={part.kind} onChange={(event) => updateContent(index, 'kind', event.target.value)}><option value="text">Text</option><option value="code">Code</option><option value="json">JSON</option></select>
             <div className="content-block-body">
               {part.kind === 'code' && <div className="code-toolbar"><span>JavaScript</span><button className="prompt-format-button" type="button" disabled={formattingIndex === index || !codeValue.trim()} onClick={() => formatCode(index, codeValue)}>{formattingIndex === index ? 'Formatting…' : 'Format Code'}</button></div>}
-              <textarea className={part.kind === 'code' ? 'code-input' : ''} aria-label={`Block ${index + 1} content`} value={typeof part.value === 'string' ? part.value : JSON.stringify(part.value, null, 2)} onChange={(event) => updateContent(index, 'value', event.target.value)} rows={part.kind === 'text' ? 2 : 8} placeholder={part.kind === 'code' ? 'Paste JavaScript code here…' : part.kind === 'json' ? 'Paste JSON here…' : 'Add context for the question…'} />
+              {part.kind === 'code'
+                ? <Suspense fallback={<div className="code-editor-loading">Loading code editor…</div>}>
+                    <CodeEditor
+                      className="code-editor"
+                      aria-label={`Block ${index + 1} content`}
+                      value={codeValue}
+                      theme={theme}
+                      placeholder="Paste JavaScript code here…"
+                      onChange={(value) => updateContent(index, 'value', value)}
+                    />
+                  </Suspense>
+                : <textarea aria-label={`Block ${index + 1} content`} value={typeof part.value === 'string' ? part.value : JSON.stringify(part.value, null, 2)} onChange={(event) => updateContent(index, 'value', event.target.value)} rows={part.kind === 'text' ? 2 : 8} placeholder={part.kind === 'json' ? 'Paste JSON here…' : 'Add context for the question…'} />}
             </div>
             <button className="icon-button icon-button-danger" type="button" aria-label="Remove content block" onClick={() => setForm({ ...form, content: form.content.filter((_, partIndex) => partIndex !== index) })}>×</button>
           </div>
@@ -500,6 +517,7 @@ function QuestionForm({ form, setForm, topics, busy, isNew, onCancel, onSubmit }
 }
 
 function App() {
+  const [theme, toggleTheme] = useTheme()
   const [admin, setAdmin] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [activePage, setActivePage] = useState('overview')
@@ -580,7 +598,7 @@ function App() {
   if (checkingSession) {
     return <main className="boot-screen"><div className="login-mark">JS</div><span>Opening your workspace…</span></main>
   }
-  if (!admin) return <Login onLogin={login} />
+  if (!admin) return <Login onLogin={login} theme={theme} toggleTheme={toggleTheme} />
 
   return (
     <div className="admin-shell">
@@ -595,13 +613,13 @@ function App() {
         <div className="sidebar-bottom"><div className="sidebar-status"><span className="secure-dot" /><span><strong>API connected</strong><small>Secure admin session</small></span></div><div className="sidebar-user"><span className="avatar">{admin.email.slice(0, 1).toUpperCase()}</span><span className="user-copy"><strong>{admin.email}</strong><small>Administrator</small></span><button className="logout-button" type="button" onClick={logout} aria-label="Sign out" title="Sign out">↗</button></div></div>
       </aside>
       <main className="main-area">
-        <header className="topbar"><div className="crumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{navigation.find((item) => item.id === activePage)?.label}</strong></div><div className="topbar-right"><span className="admin-tag">ADMIN</span><span className="topbar-avatar">{admin.email.slice(0, 1).toUpperCase()}</span></div></header>
+        <header className="topbar"><div className="crumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{navigation.find((item) => item.id === activePage)?.label}</strong></div><div className="topbar-right"><button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? '☀' : '☾'}</button><span className="admin-tag">ADMIN</span><span className="topbar-avatar">{admin.email.slice(0, 1).toUpperCase()}</span></div></header>
         <div className="content-area">
           {notice && <div className={`toast ${notice.type === 'error' ? 'toast-error' : ''}`} role={notice.type === 'error' ? 'alert' : 'status'}><span>{notice.type === 'error' ? '!' : '✓'}</span>{notice.message}<button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div>}
           {loading && <div className="loading-line"><span /> Syncing content…</div>}
           {activePage === 'overview' && <Overview topics={topics} questions={questions} onNavigate={navigate} />}
           {activePage === 'topics' && <TopicsPage topics={topics} refresh={refresh} notify={notify} />}
-          {activePage === 'questions' && <QuestionsPage topics={topics} questions={questions} refresh={refresh} notify={notify} createOnLoad={createQuestionOnLoad} />}
+          {activePage === 'questions' && <QuestionsPage topics={topics} questions={questions} refresh={refresh} notify={notify} createOnLoad={createQuestionOnLoad} theme={theme} />}
         </div>
       </main>
     </div>

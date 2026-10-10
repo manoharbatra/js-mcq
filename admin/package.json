@@ -9,6 +9,8 @@
     "preview": "vite preview --host 0.0.0.0 --port 4174"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@uiw/react-codemirror": "^4.25.12",
     "prettier": "^3.9.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
