@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-const slugSchema = z.string().trim().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const httpUrlOrEmptySchema = z.union([
   z.literal(''),
   z.string().trim().max(2048).url().refine((value) => {
@@ -20,20 +19,24 @@ export const loginSchema = z.object({
 }).strict()
 
 const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i)
-const nameSchema = z.string().trim().min(1).max(100)
+// Slugs are never accepted from clients; the API derives them from the name.
+const nameSchema = z.string().trim()
+  .min(1, 'Name is required')
+  .max(100, 'Name must be 100 characters or fewer')
+  .refine((value) => /[\p{L}\p{N}]/u.test(value), 'Name must contain at least one letter or number')
+const iconSchema = z.string().trim().max(50)
+  .transform((value) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''))
 const orderSchema = z.number().int().min(0).max(100000)
 
 export const technologySchema = z.object({
   name: nameSchema,
-  slug: slugSchema,
-  icon: z.string().trim().toLowerCase().max(50).regex(/^[a-z0-9-]*$/).optional(),
+  icon: iconSchema.optional(),
   order: orderSchema.optional(),
   isActive: z.boolean().optional(),
 }).strict()
 
 export const sectionSchema = z.object({
   name: nameSchema,
-  slug: slugSchema,
   order: orderSchema.optional(),
   isActive: z.boolean().optional(),
 }).strict()

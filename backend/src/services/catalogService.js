@@ -3,6 +3,7 @@ import { Section } from '../models/Section.js'
 import { Technology } from '../models/Technology.js'
 import { Topic } from '../models/Topic.js'
 import { HttpError } from '../utils/errors.js'
+import { escapeRegExp, uniqueSlug } from '../utils/slug.js'
 
 const sortByOrder = { order: 1, name: 1 }
 
@@ -98,14 +99,35 @@ export async function findPublicTopic(technologySlug, sectionSlug, topicSlug) {
   return topic
 }
 
+// Names are unique (case-insensitively) among siblings, and the slug always follows the name.
+async function withNameAndSlug(Model, input, scope, { current, kind, parentLabel }) {
+  if (input.name === undefined || (current && input.name === current.name)) return input
+  const duplicate = await Model.exists({
+    ...scope,
+    name: new RegExp(`^${escapeRegExp(input.name)}$`, 'i'),
+    ...(current ? { _id: { $ne: current._id } } : {}),
+  })
+  if (duplicate) {
+    throw new HttpError(409, `A ${kind} named “${input.name}” already exists${parentLabel ? ` in ${parentLabel}` : ''}`)
+  }
+  return { ...input, slug: await uniqueSlug(Model, input.name, scope, current?._id, kind) }
+}
+
+async function saveChanges(document, changes) {
+  Object.assign(document, changes)
+  await document.save()
+  return document
+}
+
 export async function createTechnology(input) {
-  return Technology.create({ ...input, order: input.order ?? await nextOrder(Technology, {}) })
+  const data = await withNameAndSlug(Technology, input, {}, { kind: 'technology' })
+  return Technology.create({ ...data, order: input.order ?? await nextOrder(Technology, {}) })
 }
 
 export async function updateTechnology(id, input) {
-  const technology = await Technology.findByIdAndUpdate(id, input, { new: true, runValidators: true })
+  const technology = await Technology.findById(id)
   if (!technology) throw new HttpError(404, 'Technology not found')
-  return technology
+  return saveChanges(technology, await withNameAndSlug(Technology, input, {}, { current: technology, kind: 'technology' }))
 }
 
 export async function deleteTechnology(id) {
@@ -117,19 +139,22 @@ export async function deleteTechnology(id) {
 }
 
 export async function createSection(technologyId, input) {
-  const technology = await Technology.findById(technologyId).select('_id')
+  const technology = await Technology.findById(technologyId).select('_id name')
   if (!technology) throw new HttpError(404, 'Technology not found')
+  const scope = { technologyId: technology._id }
+  const data = await withNameAndSlug(Section, input, scope, { kind: 'section', parentLabel: technology.name })
   return Section.create({
-    ...input,
+    ...data,
     technologyId: technology._id,
     order: input.order ?? await nextOrder(Section, { technologyId: technology._id }),
   })
 }
 
 export async function updateSection(id, input) {
-  const section = await Section.findByIdAndUpdate(id, input, { new: true, runValidators: true })
+  const section = await Section.findById(id)
   if (!section) throw new HttpError(404, 'Section not found')
-  return section
+  const data = await withNameAndSlug(Section, input, { technologyId: section.technologyId }, { current: section, kind: 'section', parentLabel: 'this technology' })
+  return saveChanges(section, data)
 }
 
 export async function deleteSection(id) {
@@ -141,10 +166,11 @@ export async function deleteSection(id) {
 }
 
 export async function createTopic(sectionId, input) {
-  const section = await Section.findById(sectionId).select('_id technologyId')
+  const section = await Section.findById(sectionId).select('_id technologyId name')
   if (!section) throw new HttpError(404, 'Section not found')
+  const data = await withNameAndSlug(Topic, input, { sectionId: section._id }, { kind: 'topic', parentLabel: section.name })
   return Topic.create({
-    ...input,
+    ...data,
     technologyId: section.technologyId,
     sectionId: section._id,
     order: input.order ?? await nextOrder(Topic, { sectionId: section._id }),
@@ -152,9 +178,10 @@ export async function createTopic(sectionId, input) {
 }
 
 export async function updateTopic(id, input) {
-  const topic = await Topic.findByIdAndUpdate(id, input, { new: true, runValidators: true })
+  const topic = await Topic.findById(id)
   if (!topic) throw new HttpError(404, 'Topic not found')
-  return topic
+  const data = await withNameAndSlug(Topic, input, { sectionId: topic.sectionId }, { current: topic, kind: 'topic', parentLabel: 'this section' })
+  return saveChanges(topic, data)
 }
 
 export async function deleteTopic(id) {
