@@ -1,19 +1,37 @@
-# React + Vite
+# JS MCQ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The repository contains three separate applications:
 
-Currently, two official plugins are available:
+- `client/` — the learner-facing React application.
+- `admin/` — the administrator React application.
+- `backend/` — the Express API and MongoDB integration.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Start all applications
 
-## React Compiler
+Install the workspace dependencies once from the repository root:
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```powershell
+npm install
+```
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+Configure MongoDB and the JWT secret in `backend\.env` using `backend\.env.example` as a template. Then start the client, admin, and API together with one command:
 
-## Expanding the ESLint configuration
+```powershell
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Learner client: `http://localhost:5173`
+- Admin app: `http://localhost:5174`
+- Backend API: `http://localhost:3000`
+
+The Vite apps proxy `/api` requests to the backend during development. For API details, environment configuration, admin provisioning, and endpoint documentation, see [backend/README.md](./backend/README.md). For admin UI information, see [admin/README.md](./admin/README.md).
+
+The learner client loads topics, subtopics, and short-answer questions directly from the backend public API. The former bundled question dataset has been removed.
+
+To provision the first admin separately, run `npm run create-admin` from the repository root. The account details are currently read by `backend/scripts/create-admin.js`; use a password that meets that script’s minimum length and do not commit real credentials.
+
+## Other commands
+
+- `npm run build` — build the learner client and admin app.
+- `npm run lint` — lint the learner client.
+- `npm run dev:backend`, `npm run dev:client`, or `npm run dev:admin` — run one app.
