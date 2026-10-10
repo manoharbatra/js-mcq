@@ -1,52 +1,81 @@
 import { Router } from 'express'
 import { authenticateAdmin } from '../utils/auth.js'
 import { asyncHandler } from '../utils/errors.js'
-import { questionSchema, questionUpdateSchema, subtopicSchema, topicSchema } from '../utils/validation.js'
+import {
+  questionOrderSchema,
+  questionSchema,
+  questionUpdateSchema,
+  sectionSchema,
+  technologySchema,
+  topicSchema,
+} from '../utils/validation.js'
+import * as catalogService from '../services/catalogService.js'
 import * as questionService from '../services/questionService.js'
-import * as topicService from '../services/topicService.js'
 
 export const adminRouter = Router()
 adminRouter.use(authenticateAdmin)
 
-adminRouter.get('/topics', asyncHandler(async (req, res) => {
-  res.json({ topics: await topicService.listTopicsForAdmin() })
+adminRouter.get('/catalog', asyncHandler(async (req, res) => {
+  res.json({ technologies: await catalogService.listCatalogForAdmin() })
 }))
 
-adminRouter.post('/topics', asyncHandler(async (req, res) => {
-  const topic = await topicService.createTopic(topicSchema.parse(req.body))
+adminRouter.post('/technologies', asyncHandler(async (req, res) => {
+  const technology = await catalogService.createTechnology(technologySchema.parse(req.body))
+  res.status(201).json({ technology })
+}))
+
+adminRouter.patch('/technologies/:id', asyncHandler(async (req, res) => {
+  const technology = await catalogService.updateTechnology(req.params.id, technologySchema.partial().parse(req.body))
+  res.json({ technology })
+}))
+
+adminRouter.delete('/technologies/:id', asyncHandler(async (req, res) => {
+  await catalogService.deleteTechnology(req.params.id)
+  res.status(204).end()
+}))
+
+adminRouter.post('/technologies/:technologyId/sections', asyncHandler(async (req, res) => {
+  const section = await catalogService.createSection(req.params.technologyId, sectionSchema.parse(req.body))
+  res.status(201).json({ section })
+}))
+
+adminRouter.patch('/sections/:id', asyncHandler(async (req, res) => {
+  const section = await catalogService.updateSection(req.params.id, sectionSchema.partial().parse(req.body))
+  res.json({ section })
+}))
+
+adminRouter.delete('/sections/:id', asyncHandler(async (req, res) => {
+  await catalogService.deleteSection(req.params.id)
+  res.status(204).end()
+}))
+
+adminRouter.post('/sections/:sectionId/topics', asyncHandler(async (req, res) => {
+  const topic = await catalogService.createTopic(req.params.sectionId, topicSchema.parse(req.body))
   res.status(201).json({ topic })
 }))
 
 adminRouter.patch('/topics/:id', asyncHandler(async (req, res) => {
-  const topic = await topicService.updateTopic(req.params.id, topicSchema.partial().parse(req.body))
+  const topic = await catalogService.updateTopic(req.params.id, topicSchema.partial().parse(req.body))
   res.json({ topic })
 }))
 
 adminRouter.delete('/topics/:id', asyncHandler(async (req, res) => {
-  await topicService.deleteTopic(req.params.id)
-  res.status(204).end()
-}))
-
-adminRouter.post('/topics/:topicId/subtopics', asyncHandler(async (req, res) => {
-  const subtopic = await topicService.createSubtopic(req.params.topicId, subtopicSchema.parse(req.body))
-  res.status(201).json({ subtopic })
-}))
-
-adminRouter.patch('/subtopics/:id', asyncHandler(async (req, res) => {
-  const subtopic = await topicService.updateSubtopic(req.params.id, subtopicSchema.partial().parse(req.body))
-  res.json({ subtopic })
-}))
-
-adminRouter.delete('/subtopics/:id', asyncHandler(async (req, res) => {
-  await topicService.deleteSubtopic(req.params.id)
+  await catalogService.deleteTopic(req.params.id)
   res.status(204).end()
 }))
 
 adminRouter.get('/questions', asyncHandler(async (req, res) => {
   const filter = {}
-  if (req.query.topic) filter.topic = req.query.topic
-  if (req.query.subtopic) filter.subtopic = req.query.subtopic
+  for (const key of ['technologyId', 'sectionId', 'topicId']) {
+    if (typeof req.query[key] === 'string' && req.query[key]) filter[key] = req.query[key]
+  }
   res.json({ questions: await questionService.listQuestions(filter) })
+}))
+
+adminRouter.patch('/questions/reorder', asyncHandler(async (req, res) => {
+  const { topicId, questionIds } = questionOrderSchema.parse(req.body)
+  const questions = await questionService.reorderQuestions(topicId, questionIds)
+  res.json({ questions })
 }))
 
 adminRouter.post('/questions', asyncHandler(async (req, res) => {

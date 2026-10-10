@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 const slugSchema = z.string().trim().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-const descriptionSchema = z.string().trim().max(500).optional().default('')
 const optionalHttpUrlSchema = z.union([
   z.literal(''),
   z.string().trim().max(2048).url().refine((value) => {
@@ -19,21 +18,30 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(200),
 }).strict()
 
-export const topicSchema = z.object({
-  name: z.string().trim().min(1).max(100),
+const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i)
+const nameSchema = z.string().trim().min(1).max(100)
+const orderSchema = z.number().int().min(0).max(100000)
+
+export const technologySchema = z.object({
+  name: nameSchema,
   slug: slugSchema,
-  description: descriptionSchema,
+  icon: z.string().trim().toLowerCase().max(50).regex(/^[a-z0-9-]*$/).optional(),
+  order: orderSchema.optional(),
+  isActive: z.boolean().optional(),
 }).strict()
 
-export const subtopicSchema = z.object({
-  name: z.string().trim().min(1).max(100),
+export const sectionSchema = z.object({
+  name: nameSchema,
   slug: slugSchema,
-  description: descriptionSchema,
+  order: orderSchema.optional(),
+  isActive: z.boolean().optional(),
 }).strict()
 
+export const topicSchema = sectionSchema
+
+// Questions only name their topic; the service derives the technology and section from it.
 const questionFieldsSchema = z.object({
-  topic: z.string().regex(/^[a-f\d]{24}$/i),
-  subtopic: z.string().regex(/^[a-f\d]{24}$/i),
+  topicId: objectIdSchema,
   title: z.string().trim().min(1).max(300),
   label: z.string().trim().max(60).optional().default('SHORT ANSWER'),
   content: z.array(contentPartSchema).max(20).optional().default([]),
@@ -45,3 +53,16 @@ const questionFieldsSchema = z.object({
 export const questionSchema = questionFieldsSchema
 
 export const questionUpdateSchema = questionFieldsSchema.partial()
+
+export const questionOrderSchema = z.object({
+  topicId: objectIdSchema,
+  questionIds: z.array(objectIdSchema).min(1).max(1000),
+}).strict().superRefine(({ questionIds }, context) => {
+  if (new Set(questionIds.map((id) => id.toLowerCase())).size !== questionIds.length) {
+    context.addIssue({
+      code: 'custom',
+      path: ['questionIds'],
+      message: 'Question IDs must be unique',
+    })
+  }
+})

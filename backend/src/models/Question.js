@@ -10,8 +10,10 @@ const contentPartSchema = new mongoose.Schema(
 
 const questionSchema = new mongoose.Schema(
   {
-    topic: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic', required: true, index: true },
-    subtopic: { type: mongoose.Schema.Types.ObjectId, ref: 'Subtopic', required: true, index: true },
+    technologyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Technology', required: true, index: true },
+    sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', required: true, index: true },
+    topicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic', required: true, index: true },
+    displayOrder: { type: Number, required: true, min: 0, default: 0 },
     title: { type: String, required: true, trim: true, maxlength: 300 },
     label: { type: String, trim: true, maxlength: 60, default: 'SHORT ANSWER' },
     content: { type: [contentPartSchema], default: [] },
@@ -22,6 +24,6 @@ const questionSchema = new mongoose.Schema(
   { timestamps: true },
 )
 
-questionSchema.index({ topic: 1, subtopic: 1, createdAt: 1 })
+questionSchema.index({ topicId: 1, displayOrder: 1, createdAt: 1 })
 
 export const Question = mongoose.model('Question', questionSchema)

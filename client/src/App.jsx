@@ -1,277 +1,201 @@
-import { useEffect, useMemo, useState } from 'react'
-import hljs from 'highlight.js/lib/core'
-import javascript from 'highlight.js/lib/languages/javascript'
-import json from 'highlight.js/lib/languages/json'
+import { useEffect, useRef, useState } from 'react'
+import { fetchCatalog } from './api.js'
+import { buildPath, navigate, parseRoute, usePathname } from './router.js'
 import { useTheme } from './useTheme.js'
+import { Icon } from './components/Icon.jsx'
+import { Link } from './components/Link.jsx'
+import { Overview } from './components/Overview.jsx'
+import { Sidebar } from './components/Sidebar.jsx'
+import { StatusCard } from './components/StatusCard.jsx'
+import { TopicPage } from './components/TopicPage.jsx'
 import './App.css'
 
-hljs.registerLanguage('javascript', javascript)
-hljs.registerLanguage('json', json)
+const appName = 'JS MCQ Practice'
 
-async function getPublicData(path) {
-  const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api'
-  const response = await fetch(`${apiBase}/public${path}`)
-  const data = await response.json().catch(() => null)
-
-  if (!response.ok) {
-    throw new Error(data?.error ?? `Unable to load content (${response.status})`)
-  }
-
-  return data
+function countLabel(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`
 }
 
-function JsonBlock({ value }) {
-  const initialJson = typeof value === 'string' ? value : JSON.stringify(value)
-  const [jsonText, setJsonText] = useState(initialJson)
-  const [hasFormatError, setHasFormatError] = useState(false)
-  const highlightedJson = useMemo(
-    () => hljs.highlight(jsonText, { language: 'json', ignoreIllegals: true }).value,
-    [jsonText],
-  )
-
-  function formatJson() {
-    try {
-      setJsonText(JSON.stringify(JSON.parse(jsonText), null, 2))
-      setHasFormatError(false)
-    } catch {
-      setHasFormatError(true)
-    }
+function Breadcrumbs({ route, technology, section, topic }) {
+  const crumbs = [{ label: 'Study topics', to: '/' }]
+  if (route.technologySlug) {
+    crumbs.push({ label: technology?.name ?? route.technologySlug, to: buildPath(route.technologySlug) })
+  }
+  if (route.sectionSlug) {
+    crumbs.push({ label: section?.name ?? route.sectionSlug, to: buildPath(route.technologySlug, route.sectionSlug) })
+  }
+  if (route.topicSlug) {
+    crumbs.push({ label: topic?.name ?? route.topicSlug, to: buildPath(route.technologySlug, route.sectionSlug, route.topicSlug) })
   }
 
   return (
-    <div className="formatted-prompt">
-      <div className="prompt-toolbar">
-        {hasFormatError && <span className="prompt-format-error" role="status">Invalid JSON</span>}
-        <button className="prompt-format-button" type="button" onClick={formatJson}>Format JSON</button>
-      </div>
-      <pre className="prompt-json"><code dangerouslySetInnerHTML={{ __html: highlightedJson }} /></pre>
-    </div>
-  )
-}
-
-function CodeBlock({ value }) {
-  const [formattedCode, setFormattedCode] = useState({ source: value, text: value })
-  const [formatErrorState, setFormatError] = useState({ source: value, message: '' })
-  const [isFormatting, setIsFormatting] = useState(false)
-  const codeText = formattedCode.source === value ? formattedCode.text : value
-  const formatError = formatErrorState.source === value ? formatErrorState.message : ''
-  const highlightedCode = useMemo(
-    () => hljs.highlight(codeText, { language: 'javascript', ignoreIllegals: true }).value,
-    [codeText],
-  )
-
-  async function formatCode() {
-    setIsFormatting(true)
-    try {
-      const [prettier, babelPlugin, estreePlugin] = await Promise.all([
-        import('prettier/standalone'),
-        import('prettier/plugins/babel'),
-        import('prettier/plugins/estree'),
-      ])
-      const formattedCode = await prettier.format(codeText, {
-        parser: 'babel',
-        plugins: [babelPlugin, estreePlugin],
-        semi: true,
-        singleQuote: true,
-      })
-      setFormattedCode({ source: value, text: formattedCode })
-      setFormatError({ source: value, message: '' })
-    } catch (error) {
-      const message = error instanceof Error ? `Unable to format code: ${error.message}` : 'Unable to format code.'
-      setFormatError({ source: value, message })
-    } finally {
-      setIsFormatting(false)
-    }
-  }
-
-  return (
-    <div className="formatted-prompt">
-      <div className="prompt-toolbar">
-        {formatError && <span className="prompt-format-error" role="status" title={formatError}>Unable to format code</span>}
-        <button className="prompt-format-button" type="button" onClick={formatCode} disabled={isFormatting}>
-          {isFormatting ? 'Formatting...' : 'Format Code'}
-        </button>
-      </div>
-      <pre className="prompt-code"><code dangerouslySetInnerHTML={{ __html: highlightedCode }} /></pre>
-    </div>
-  )
-}
-
-function Prompt({ question }) {
-  if (!question.content?.length) return null
-  return <div className="prompt-parts">{question.content.map((part, index) => part.kind === 'text'
-    ? <p className="prompt-text" key={index}>{part.value}</p>
-    : part.kind === 'json'
-      ? <JsonBlock key={index} value={part.value} />
-      : <CodeBlock key={index} value={part.value} />)}</div>
-}
-
-function QuestionCard({ question, index, total }) {
-  const [isAnswerVisible, setIsAnswerVisible] = useState(false)
-  const answerId = `answer-${question.id}`
-
-  return (
-    <article className="question-card">
-      <div className="question-meta"><span>QUESTION <strong>{String(index + 1).padStart(2, '0')}</strong> <span className="meta-divider">/</span> {String(total).padStart(2, '0')}</span><span className="question-tag">{question.label}</span></div>
-      <div className="progress-track" role="progressbar" aria-label={`Question ${index + 1} progress`} aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={total}><span style={{ width: `${((index + 1) / total) * 100}%` }} /></div>
-      <h2 className="question-title">{question.title}</h2>
-      <Prompt question={question} />
-      {(question.mediumUrl || question.compilerUrl) && <div className="question-resources">
-        {question.mediumUrl && <a href={question.mediumUrl} target="_blank" rel="noopener noreferrer">Read article <span aria-hidden="true">↗</span></a>}
-        {question.compilerUrl && <a href={question.compilerUrl} target="_blank" rel="noopener noreferrer">Practice in compiler <span aria-hidden="true">↗</span></a>}
-      </div>}
-      <div className="answer-area">
-        <div className="answer-heading">
-          <button
-            className="reveal-button"
-            type="button"
-            aria-expanded={isAnswerVisible}
-            aria-controls={answerId}
-            onClick={() => setIsAnswerVisible(!isAnswerVisible)}
-          >
-            <span aria-hidden="true">{isAnswerVisible ? '−' : '+'}</span>
-            {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
-          </button>
-        </div>
-        <div id={answerId} className="revealed-answer" hidden={!isAnswerVisible}>
-          <p>{question.answer}</p>
-        </div>
-      </div>
-    </article>
+    <nav className="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        {crumbs.map((crumb, index) => (
+          <li key={crumb.to}>
+            {index === crumbs.length - 1
+              ? <span aria-current="page">{crumb.label}</span>
+              : <><Link to={crumb.to}>{crumb.label}</Link><Icon name="chevronRight" size={14} className="crumb-divider" /></>}
+          </li>
+        ))}
+      </ol>
+    </nav>
   )
 }
 
 function App() {
   const [theme, toggleTheme] = useTheme()
-  const [topics, setTopics] = useState([])
-  const [activeTopicId, setActiveTopicId] = useState('')
-  const [activeSubtopicId, setActiveSubtopicId] = useState('')
-  const [questions, setQuestions] = useState([])
-  const [isTopicsLoading, setIsTopicsLoading] = useState(true)
-  const [isQuestionsLoading, setIsQuestionsLoading] = useState(false)
-  const [loadError, setLoadError] = useState('')
-  const [retryKey, setRetryKey] = useState(0)
+  const pathname = usePathname()
+  const route = parseRoute(pathname)
+  const contentRef = useRef(null)
+  const [catalogState, setCatalogState] = useState({ status: 'loading', technologies: [], error: '' })
+  const [catalogRequestId, setCatalogRequestId] = useState(0)
+  const [isNavOpen, setIsNavOpen] = useState(false)
 
   useEffect(() => {
-    let isCurrent = true
-    setIsTopicsLoading(true)
-    setLoadError('')
-
-    getPublicData('/topics')
-      .then(({ topics: loadedTopics }) => {
-        if (!isCurrent) return
-        setTopics(loadedTopics)
-        const firstTopic = loadedTopics[0]
-        setActiveTopicId((currentId) => loadedTopics.some((topic) => topic.id === currentId)
-          ? currentId
-          : firstTopic?.id ?? '')
-      })
+    const controller = new AbortController()
+    fetchCatalog(controller.signal)
+      .then((technologies) => setCatalogState({ status: 'ready', technologies, error: '' }))
       .catch((error) => {
-        if (!isCurrent) return
-        setLoadError(error.message)
+        if (!controller.signal.aborted) setCatalogState({ status: 'error', technologies: [], error: error.message })
       })
-      .finally(() => {
-        if (isCurrent) setIsTopicsLoading(false)
-      })
+    return () => controller.abort()
+  }, [catalogRequestId])
 
-    return () => { isCurrent = false }
-  }, [retryKey])
+  const { status, technologies, error } = catalogState
+  const technology = technologies.find(({ slug }) => slug === route.technologySlug) ?? null
+  const section = technology?.sections.find(({ slug }) => slug === route.sectionSlug) ?? null
+  const topic = section?.topics.find(({ slug }) => slug === route.topicSlug) ?? null
+  const isHome = !route.technologySlug
 
-  const selectedTopic = topics.find((topic) => topic.id === activeTopicId) ?? null
-  const subtopics = selectedTopic?.subtopics ?? []
+  // A section URL opens its first topic, matching the sidebar's section links.
+  const firstTopicSlug = section && !route.topicSlug ? section.topics[0]?.slug : ''
+  useEffect(() => {
+    if (firstTopicSlug) navigate(buildPath(technology.slug, section.slug, firstTopicSlug), { replace: true })
+  }, [firstTopicSlug, technology?.slug, section?.slug])
 
   useEffect(() => {
-    if (!subtopics.length) {
-      setActiveSubtopicId('')
-      return
-    }
-    if (!subtopics.some((subtopic) => subtopic.id === activeSubtopicId)) {
-      setActiveSubtopicId(subtopics[0].id)
-    }
-  }, [activeSubtopicId, subtopics])
+    document.title = [topic?.name, section?.name, technology?.name, appName].filter(Boolean).join(' · ')
+  }, [technology, section, topic])
 
-  const selectedSubtopic = subtopics.find((subtopic) => subtopic.id === activeSubtopicId) ?? null
+  // Pages scroll inside the content area, so reset it when the route changes.
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 })
+  }, [pathname])
 
   useEffect(() => {
-    if (!selectedTopic || !selectedSubtopic) {
-      setQuestions([])
-      setIsQuestionsLoading(false)
-      return
+    if (!isNavOpen) return
+    function closeOnEscape(event) {
+      if (event.key === 'Escape') setIsNavOpen(false)
     }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [isNavOpen])
 
-    let isCurrent = true
-    setIsQuestionsLoading(true)
-    setLoadError('')
-    setQuestions([])
-    const path = `/topics/${encodeURIComponent(selectedTopic.slug)}/subtopics/${encodeURIComponent(selectedSubtopic.slug)}/questions`
+  function retryCatalog() {
+    setCatalogState({ status: 'loading', technologies: [], error: '' })
+    setCatalogRequestId((id) => id + 1)
+  }
 
-    getPublicData(path)
-      .then(({ questions: loadedQuestions }) => {
-        if (isCurrent) setQuestions(loadedQuestions)
-      })
-      .catch((error) => {
-        if (isCurrent) setLoadError(error.message)
-      })
-      .finally(() => {
-        if (isCurrent) setIsQuestionsLoading(false)
-      })
-
-    return () => { isCurrent = false }
-  }, [selectedSubtopic, selectedTopic, retryKey])
+  let page
+  if (status === 'loading' || firstTopicSlug) {
+    page = <StatusCard isLoading message="Loading study topics…" />
+  } else if (status === 'error') {
+    page = <StatusCard isError title="Couldn’t load practice content" message={error} onRetry={retryCatalog} />
+  } else if (route.technologySlug && !technology) {
+    page = <StatusCard title="Technology not found" message="This technology doesn’t exist or may have been renamed." homeLink />
+  } else if (route.sectionSlug && !section) {
+    page = <StatusCard title="Section not found" message={`There is no “${route.sectionSlug}” section in ${technology.name}.`} homeLink />
+  } else if (section && !section.topics.length) {
+    page = <StatusCard title="No topics in this section yet" message="Topics will appear here once they’re added." homeLink />
+  } else if (route.topicSlug && !topic) {
+    page = <StatusCard title="Topic not found" message={`There is no “${route.topicSlug}” topic in ${section.name}.`} homeLink />
+  } else if (topic) {
+    page = <TopicPage key={topic.id} technology={technology} section={section} topic={topic} />
+  } else if (technology) {
+    page = (
+      <Overview
+        title={technology.name}
+        description={`Pick a ${technology.name} topic to start practicing.`}
+        emptyTitle="No sections yet"
+        emptyMessage="Sections for this technology will appear here once they’re created."
+        cards={technology.sections.map((item) => ({
+          id: item.id,
+          name: item.name,
+          badgeName: item.name,
+          meta: `${countLabel(item.topics.length, 'topic')} · ${countLabel(item.questionCount, 'question')}`,
+          emptyNote: 'No topics yet.',
+          links: item.topics.map((topicItem) => ({
+            id: topicItem.id,
+            name: topicItem.name,
+            meta: countLabel(topicItem.questionCount, 'question'),
+            to: buildPath(technology.slug, item.slug, topicItem.slug),
+          })),
+        }))}
+      />
+    )
+  } else {
+    page = (
+      <Overview
+        title="Study topics"
+        description="Pick a technology and section, then work through its topics."
+        emptyTitle="No technologies available yet"
+        emptyMessage="Technologies will appear here once they’re created."
+        cards={technologies.map((item) => ({
+          id: item.id,
+          name: item.name,
+          badgeName: item.name,
+          icon: item.icon,
+          meta: countLabel(item.sections.length, 'section'),
+          emptyNote: 'No sections yet.',
+          links: item.sections.map((sectionItem) => ({
+            id: sectionItem.id,
+            name: sectionItem.name,
+            meta: `${countLabel(sectionItem.topics.length, 'topic')} · ${countLabel(sectionItem.questionCount, 'question')}`,
+            to: buildPath(item.slug, sectionItem.slug),
+          })),
+        }))}
+      />
+    )
+  }
 
   return (
-    <div className="study-app">
-      <aside className="sidebar">
-        <a className="brand" href="#top" aria-label="JS MCQ Practice home"><span className="brand-mark">JS</span><span>JS MCQ Practice</span></a>
-        <nav className="topic-nav" aria-label="Topics">
-          <div className="nav-section"><span className="nav-section-icon">⌘</span><span>Study topics</span><span className="chevron">⌃</span></div>
-          {isTopicsLoading ? <p className="nav-message">Loading topics…</p> : topics.length ? (
-            <ul className="topic-list">
-              {topics.map((topic) => <li className="topic-nav-entry" key={topic.id}>
-                <button className={`topic-item ${topic.id === activeTopicId ? 'active' : ''}`} type="button" onClick={() => setActiveTopicId(topic.id)}>
-                  <span className="topic-marker" />{topic.name}<span className="topic-count">{topic.subtopics.length}</span>
-                </button>
-                {topic.id === activeTopicId && topic.subtopics.length > 0 && (
-                  <ul className="subtopic-list" aria-label={`${topic.name} subtopics`}>
-                    {topic.subtopics.map((subtopic) => <li key={subtopic.id}>
-                      <button className={`subtopic-item ${subtopic.id === activeSubtopicId ? 'active' : ''}`} type="button" onClick={() => setActiveSubtopicId(subtopic.id)}>
-                        <span className="subtopic-marker" />{subtopic.name}
-                      </button>
-                    </li>)}
-                  </ul>
-                )}
-              </li>)}
-            </ul>
-          ) : !loadError && <p className="nav-message">No topics yet.</p>}
-        </nav>
-        <div className="sidebar-foot"><span className="status-dot" /> Learning by doing</div>
-      </aside>
+    <div className="app-shell">
+      <Sidebar
+        catalogState={catalogState}
+        activeTechnologySlug={route.technologySlug}
+        activeSectionSlug={route.sectionSlug}
+        isHome={isHome}
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+      />
+      {isNavOpen && <div className="sidebar-backdrop" onClick={() => setIsNavOpen(false)} aria-hidden="true" />}
 
-      <main className="main-content" id="top">
-        <header className="topbar"><div className="breadcrumbs"><span>Study topics</span>{selectedTopic && <><span className="crumb-divider">/</span><span>{selectedTopic.name}</span></>}{selectedSubtopic && <><span className="crumb-divider">/</span><span>{selectedSubtopic.name}</span></>}</div><div className="topbar-actions"><span className="topbar-note">SHORT ANSWER <span>·</span></span><button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? '☀' : '☾'}</button></div></header>
-        <section className="workspace">
-          {loadError ? (
-            <div className="client-state client-error" role="alert">
-              <strong>Couldn't load practice content</strong>
-              <p>{loadError}</p>
-              <button className="client-retry" type="button" onClick={() => setRetryKey((key) => key + 1)}>Try again</button>
-            </div>
-          ) : isTopicsLoading || isQuestionsLoading ? (
-            <div className="client-state" role="status"><span className="loading-indicator" />Loading practice content…</div>
-          ) : !topics.length ? (
-            <div className="client-state"><strong>No topics available yet</strong><p>Practice topics will appear here once created.</p></div>
-          ) : !subtopics.length ? (
-            <div className="client-state"><strong>No subtopics available yet</strong><p>Subtopics for this topic will appear here once created.</p></div>
-          ) : !questions.length ? (
-            <div className="client-state"><strong>No questions in this subtopic yet</strong><p>Questions will appear here once added.</p></div>
-          ) : (
-            questions.map((question, index) => (
-              <QuestionCard key={question.id} question={question} index={index} total={questions.length} />
-            ))
-          )}
-          <footer className="workspace-footer"><span>Keep going. Every question makes the concepts clearer.</span><span>JS MCQ <i>·</i> LEARNING BY DOING</span></footer>
-        </section>
-      </main>
+      <div className="main">
+        <header className="topbar">
+          <button
+            className="icon-button menu-button"
+            type="button"
+            onClick={() => setIsNavOpen(true)}
+            aria-label="Open navigation"
+            aria-controls="site-nav"
+            aria-expanded={isNavOpen}
+          >
+            <Icon name="menu" />
+          </button>
+          <Breadcrumbs route={route} technology={technology} section={section} topic={topic} />
+          <button
+            className="icon-button theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+          </button>
+        </header>
+        <main className={`content ${topic ? 'content-split' : ''}`} ref={contentRef}>{page}</main>
+      </div>
     </div>
   )
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "migrate-catalog": "node scripts/migrate-catalog.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

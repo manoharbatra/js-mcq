@@ -6,7 +6,7 @@ const CodeEditor = lazy(() => import('./CodeEditor.jsx'))
 
 const navigation = [
   { id: 'overview', label: 'Overview', icon: '◫' },
-  { id: 'topics', label: 'Topics & subtopics', icon: '▤' },
+  { id: 'catalog', label: 'Content structure', icon: '▤' },
   { id: 'questions', label: 'MCQ library', icon: '☷' },
 ]
 
@@ -75,8 +75,8 @@ function Login({ onLogin, theme, toggleTheme }) {
   )
 }
 
-function Overview({ topics, questions, onNavigate }) {
-  const subtopicCount = topics.reduce((sum, topic) => sum + (topic.subtopics?.length ?? 0), 0)
+function Overview({ technologies, questions, onNavigate }) {
+  const { sectionById, topicById, technologyById } = indexCatalog(technologies)
   const resourceCount = questions.filter((question) => question.mediumUrl || question.compilerUrl).length
   const recentQuestions = [...questions].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 5)
 
@@ -87,16 +87,16 @@ function Overview({ topics, questions, onNavigate }) {
         <button className="button button-primary" type="button" onClick={() => onNavigate('questions', true)}>＋ Create question</button>
       </div>
       <div className="stats-grid">
-        <article className="stat-card"><span className="stat-icon icon-violet">▤</span><span className="stat-label">Topics</span><strong>{topics.length}</strong><span className="stat-note">Learning categories</span></article>
-        <article className="stat-card"><span className="stat-icon icon-blue">⌘</span><span className="stat-label">Subtopics</span><strong>{subtopicCount}</strong><span className="stat-note">Organized concepts</span></article>
-        <article className="stat-card"><span className="stat-icon icon-gold">☷</span><span className="stat-label">Questions</span><strong>{questions.length}</strong><span className="stat-note">MCQs in your library</span></article>
+        <article className="stat-card"><span className="stat-icon icon-violet">▤</span><span className="stat-label">Technologies</span><strong>{technologyById.size}</strong><span className="stat-note">{sectionById.size} sections</span></article>
+        <article className="stat-card"><span className="stat-icon icon-blue">⌘</span><span className="stat-label">Topics</span><strong>{topicById.size}</strong><span className="stat-note">Concepts across all sections</span></article>
+        <article className="stat-card"><span className="stat-icon icon-gold">☷</span><span className="stat-label">Questions</span><strong>{questions.length}</strong><span className="stat-note">Questions in your library</span></article>
         <article className="stat-card"><span className="stat-icon icon-green">↗</span><span className="stat-label">With resources</span><strong>{resourceCount}</strong><span className="stat-note">Questions with useful links</span></article>
       </div>
       <section className="panel recent-panel">
         <div className="panel-heading"><div><h2>Recently updated questions</h2><p>Your latest edits across the library</p></div><button className="text-button" type="button" onClick={() => onNavigate('questions')}>View all <span>→</span></button></div>
-        {recentQuestions.length === 0 ? <EmptyState title="No questions yet" detail="Create a topic structure, then add your first MCQ." /> : (
-          <div className="table-wrap"><table><thead><tr><th>Question</th><th>Topic</th><th>Subtopic</th><th>Updated</th></tr></thead><tbody>
-            {recentQuestions.map((question) => <tr key={question._id}><td className="question-cell">{question.title}</td><td>{topicName(topics, question.topic)}</td><td>{subtopicName(topics, question.subtopic)}</td><td>{new Date(question.updatedAt).toLocaleDateString()}</td></tr>)}
+        {recentQuestions.length === 0 ? <EmptyState title="No questions yet" detail="Create a technology, section and topic, then add your first question." /> : (
+          <div className="table-wrap"><table><thead><tr><th>Question</th><th>Technology</th><th>Section › Topic</th><th>Updated</th></tr></thead><tbody>
+            {recentQuestions.map((question) => <tr key={question._id}><td className="question-cell">{question.title}</td><td>{nameOf(technologyById, question.technologyId)}</td><td>{nameOf(sectionById, question.sectionId)} › {nameOf(topicById, question.topicId)}</td><td>{new Date(question.updatedAt).toLocaleDateString()}</td></tr>)}
           </tbody></table></div>
         )}
       </section>
@@ -108,239 +108,251 @@ function EmptyState({ title, detail }) {
   return <div className="empty-state"><span className="empty-icon">◇</span><strong>{title}</strong><p>{detail}</p></div>
 }
 
-function topicName(topics, id) {
-  return topics.find((topic) => topic._id === id || topic._id === id?.toString())?.name ?? '—'
-}
-
-function subtopicName(topics, id) {
-  for (const topic of topics) {
-    const match = topic.subtopics?.find((item) => item._id === id || item._id === id?.toString())
-    if (match) return match.name
-  }
-  return '—'
-}
-
-function TopicsPage({ topics, refresh, notify }) {
-  const [selectedId, setSelectedId] = useState('')
-  const [topicEditing, setTopicEditing] = useState(null)
-  const [subtopicEditing, setSubtopicEditing] = useState(null)
-  const [topicForm, setTopicForm] = useState(emptyTopic)
-  const [subtopicForm, setSubtopicForm] = useState(emptySubtopic)
-  const [savingTopic, setSavingTopic] = useState(false)
-  const [savingSubtopic, setSavingSubtopic] = useState(false)
-
-  const selectedTopic = topics.find((topic) => topic._id === selectedId) ?? topics[0] ?? null
-  useEffect(() => {
-    if (!selectedTopic) {
-      setSelectedId('')
-      return
+function indexCatalog(technologies) {
+  const technologyById = new Map()
+  const sectionById = new Map()
+  const topicById = new Map()
+  for (const technology of technologies) {
+    technologyById.set(technology._id, technology)
+    for (const section of technology.sections) {
+      sectionById.set(section._id, section)
+      for (const topic of section.topics) topicById.set(topic._id, topic)
     }
-    if (selectedId !== selectedTopic._id) setSelectedId(selectedTopic._id)
-  }, [selectedId, selectedTopic])
+  }
+  return { technologyById, sectionById, topicById }
+}
 
-  function beginTopicEdit(topic) {
-    setTopicEditing(topic?._id ?? 'new')
-    setTopicForm(topic ? {
-      name: topic.name,
-      slug: topic.slug,
-      description: topic.description ?? '',
-    } : emptyTopic())
+function nameOf(map, id) {
+  return map.get(id?.toString())?.name ?? '—'
+}
+
+// The first topic matching whichever of technology/section/topic are set.
+function firstPlacement(technologies, { technologyId = '', sectionId = '', topicId = '' } = {}) {
+  for (const technology of technologies) {
+    if (technologyId && technology._id !== technologyId) continue
+    for (const section of technology.sections) {
+      if (sectionId && section._id !== sectionId) continue
+      for (const topic of section.topics) {
+        if (topicId && topic._id !== topicId) continue
+        return { technologyId: technology._id, sectionId: section._id, topicId: topic._id }
+      }
+    }
+  }
+  return { technologyId, sectionId, topicId: '' }
+}
+
+const catalogLevels = {
+  technology: { singular: 'technology', plural: 'technologies', placeholder: 'e.g. JavaScript' },
+  section: { singular: 'section', plural: 'sections', placeholder: 'e.g. Output Based' },
+  topic: { singular: 'topic', plural: 'topics', placeholder: 'e.g. Closures' },
+}
+
+function emptyCatalogItem(kind) {
+  return { name: '', slug: '', ...(kind === 'technology' ? { icon: '' } : {}), order: '', isActive: true }
+}
+
+function CatalogPage({ technologies, refresh, notify }) {
+  const [technologyId, setTechnologyId] = useState('')
+  const [sectionId, setSectionId] = useState('')
+  const technology = technologies.find((item) => item._id === technologyId) ?? technologies[0] ?? null
+  const sections = technology?.sections ?? []
+  const section = sections.find((item) => item._id === sectionId) ?? sections[0] ?? null
+
+  return (
+    <>
+      <div className="page-heading"><div><p className="eyebrow">CONTENT STRUCTURE</p><h1>Technologies, sections & topics</h1><p className="page-subtitle">Technology › Section › Topic. Questions are added to a topic.</p></div></div>
+      <div className="catalog-layout">
+        <CatalogLevel
+          kind="technology"
+          title="Technologies"
+          items={technologies}
+          selectedId={technology?._id}
+          onSelect={(id) => { setTechnologyId(id); setSectionId('') }}
+          createPath="/admin/technologies"
+          basePath="/admin/technologies"
+          describe={(item) => `${item.sections.length} sections`}
+          emptyDetail="Add a technology such as JavaScript, React or System Design."
+          refresh={refresh}
+          notify={notify}
+        />
+        <CatalogLevel
+          key={`sections-${technology?._id}`}
+          kind="section"
+          title={technology ? `Sections in ${technology.name}` : 'Sections'}
+          items={sections}
+          selectedId={section?._id}
+          onSelect={setSectionId}
+          createPath={technology ? `/admin/technologies/${technology._id}/sections` : ''}
+          basePath="/admin/sections"
+          describe={(item) => `${item.topics.length} topics`}
+          emptyDetail={technology ? 'Add a section such as Output Based or Concepts.' : 'Create a technology first.'}
+          refresh={refresh}
+          notify={notify}
+        />
+        <CatalogLevel
+          key={`topics-${section?._id}`}
+          kind="topic"
+          title={section ? `Topics in ${section.name}` : 'Topics'}
+          items={section?.topics ?? []}
+          createPath={section ? `/admin/sections/${section._id}/topics` : ''}
+          basePath="/admin/topics"
+          describe={(item) => `${item.questionCount} questions`}
+          emptyDetail={section ? 'Add a topic such as Closures or Promises.' : 'Create a section first.'}
+          refresh={refresh}
+          notify={notify}
+        />
+      </div>
+    </>
+  )
+}
+
+function CatalogLevel({ kind, title, items, selectedId, onSelect, createPath, basePath, describe, emptyDetail, refresh, notify }) {
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState(() => emptyCatalogItem(kind))
+  const [busy, setBusy] = useState(false)
+  const { singular, plural, placeholder } = catalogLevels[kind]
+  const label = singular[0].toUpperCase() + singular.slice(1)
+
+  function beginEdit(item) {
+    setEditingId(item?._id ?? 'new')
+    setForm(item ? {
+      name: item.name,
+      slug: item.slug,
+      ...(kind === 'technology' ? { icon: item.icon ?? '' } : {}),
+      order: String(item.order ?? ''),
+      isActive: item.isActive !== false,
+    } : emptyCatalogItem(kind))
   }
 
-  function beginSubtopicEdit(subtopic) {
-    setSubtopicEditing(subtopic?._id ?? 'new')
-    setSubtopicForm(subtopic ? {
-      name: subtopic.name,
-      slug: subtopic.slug,
-      description: subtopic.description ?? '',
-    } : emptySubtopic())
-  }
-
-  async function saveTopic(event) {
+  async function save(event) {
     event.preventDefault()
-    setSavingTopic(true)
+    const isNew = editingId === 'new'
+    setBusy(true)
     try {
-      const editing = topicEditing !== 'new'
-      const result = await apiRequest(editing ? `/admin/topics/${topicEditing}` : '/admin/topics', {
-        method: editing ? 'PATCH' : 'POST',
-        body: topicForm,
+      await apiRequest(isNew ? createPath : `${basePath}/${editingId}`, {
+        method: isNew ? 'POST' : 'PATCH',
+        body: { ...form, order: form.order === '' ? undefined : Number(form.order) },
       })
       await refresh()
-      setSelectedId(result.topic._id)
-      setTopicEditing(null)
-      notify(editing ? 'Topic updated.' : 'Topic created.')
+      setEditingId(null)
+      notify(`${label} ${isNew ? 'created' : 'updated'}.`)
     } catch (error) {
       notify(error.message, 'error')
     } finally {
-      setSavingTopic(false)
+      setBusy(false)
     }
   }
 
-  async function saveSubtopic(event) {
-    event.preventDefault()
-    if (!selectedTopic) return
-    setSavingSubtopic(true)
+  async function remove(item) {
+    if (!window.confirm(`Delete “${item.name}”? A ${singular} that still has content cannot be deleted.`)) return
     try {
-      const editing = subtopicEditing !== 'new'
-      await apiRequest(
-        editing ? `/admin/subtopics/${subtopicEditing}` : `/admin/topics/${selectedTopic._id}/subtopics`,
-        { method: editing ? 'PATCH' : 'POST', body: subtopicForm },
-      )
+      await apiRequest(`${basePath}/${item._id}`, { method: 'DELETE' })
       await refresh()
-      setSubtopicEditing(null)
-      notify(editing ? 'Subtopic updated.' : 'Subtopic created.')
-    } catch (error) {
-      notify(error.message, 'error')
-    } finally {
-      setSavingSubtopic(false)
-    }
-  }
-
-  async function deleteTopic(topic) {
-    if (!window.confirm(`Delete “${topic.name}”? Topics with subtopics or questions cannot be deleted.`)) return
-    try {
-      await apiRequest(`/admin/topics/${topic._id}`, { method: 'DELETE' })
-      if (topic._id === selectedTopic?._id) setSelectedId('')
-      await refresh()
-      notify('Topic deleted.')
-    } catch (error) {
-      notify(error.message, 'error')
-    }
-  }
-
-  async function deleteSubtopic(subtopic) {
-    if (!window.confirm(`Delete “${subtopic.name}”? Subtopics with questions cannot be deleted.`)) return
-    try {
-      await apiRequest(`/admin/subtopics/${subtopic._id}`, { method: 'DELETE' })
-      await refresh()
-      notify('Subtopic deleted.')
+      notify(`${label} deleted.`)
     } catch (error) {
       notify(error.message, 'error')
     }
   }
 
   return (
-    <>
-      <div className="page-heading"><div><p className="eyebrow">CONTENT STRUCTURE</p><h1>Topics & subtopics</h1><p className="page-subtitle">Organize your question library into clear learning paths.</p></div><button className="button button-primary" type="button" onClick={() => beginTopicEdit(null)}>＋ New topic</button></div>
-      <div className="topics-layout">
-        <section className="panel topic-list-panel">
-          <div className="panel-heading"><div><h2>Topics</h2><p>{topics.length} {topics.length === 1 ? 'category' : 'categories'}</p></div></div>
-          {topics.length === 0 ? <EmptyState title="No topics created" detail="Add a topic to start organizing your MCQs." /> : (
-            <div className="topic-list">{topics.map((topic) => (
-              <button className={`topic-select ${selectedTopic?._id === topic._id ? 'selected' : ''}`} key={topic._id} type="button" onClick={() => { setSelectedId(topic._id); setTopicEditing(null); setSubtopicEditing(null) }}>
-                <span className="topic-select-mark">#</span>
-                <span className="topic-select-copy"><strong>{topic.name}</strong><small>{topic.subtopics?.length ?? 0} subtopics</small></span>
-              </button>
-            ))}</div>
-          )}
-        </section>
-        <div className="topic-detail-column">
-          {topicEditing !== null ? (
-            <TopicForm
-              form={topicForm}
-              setForm={setTopicForm}
-              isNew={topicEditing === 'new'}
-              busy={savingTopic}
-              onCancel={() => setTopicEditing(null)}
-              onSubmit={saveTopic}
-            />
-          ) : selectedTopic ? (
-            <>
-              <section className="panel topic-summary">
-                <div className="topic-summary-head"><div><span className="topic-summary-icon">#</span><div><p className="eyebrow">TOPIC</p><h2>{selectedTopic.name}</h2></div></div><div className="inline-actions"><button className="button button-secondary button-small" type="button" onClick={() => beginTopicEdit(selectedTopic)}>Edit</button><button className="button button-danger button-small" type="button" onClick={() => deleteTopic(selectedTopic)}>Delete</button></div></div>
-                <p className="topic-description">{selectedTopic.description || 'No description added.'}</p>
-                <div className="topic-meta"><span>/{selectedTopic.slug}</span></div>
-              </section>
-              <section className="panel subtopic-panel">
-                <div className="panel-heading"><div><h2>Subtopics</h2><p>Concepts grouped under {selectedTopic.name}</p></div><button className="button button-secondary button-small" type="button" onClick={() => beginSubtopicEdit(null)}>＋ Add subtopic</button></div>
-                {subtopicEditing !== null ? (
-                  <SubtopicForm form={subtopicForm} setForm={setSubtopicForm} isNew={subtopicEditing === 'new'} busy={savingSubtopic} onCancel={() => setSubtopicEditing(null)} onSubmit={saveSubtopic} />
-                ) : selectedTopic.subtopics?.length ? (
-                  <div className="subtopic-list">{selectedTopic.subtopics.map((subtopic) => (
-                    <article className="subtopic-row" key={subtopic._id}>
-                      <span className="subtopic-mark">↳</span><div className="subtopic-copy"><strong>{subtopic.name}</strong><small>/{subtopic.slug}{subtopic.description ? ` · ${subtopic.description}` : ''}</small></div>
-                      <button className="icon-button" type="button" aria-label={`Edit ${subtopic.name}`} onClick={() => beginSubtopicEdit(subtopic)}>✎</button>
-                      <button className="icon-button icon-button-danger" type="button" aria-label={`Delete ${subtopic.name}`} onClick={() => deleteSubtopic(subtopic)}>×</button>
-                    </article>
-                  ))}</div>
-                ) : <EmptyState title="No subtopics yet" detail="Create a subtopic to start adding questions under this topic." />}
-              </section>
-            </>
-          ) : <section className="panel"><EmptyState title="Select a topic" detail="Choose a topic from the list, or create a new one." /></section>}
-        </div>
+    <section className="panel catalog-panel">
+      <div className="panel-heading">
+        <div><h2>{title}</h2><p>{items.length} {items.length === 1 ? singular : plural}</p></div>
+        <button className="button button-secondary button-small" type="button" onClick={() => beginEdit(null)} disabled={!createPath}>＋ Add</button>
       </div>
-    </>
+      {editingId !== null && (
+        <form className="subtopic-form" onSubmit={save}>
+          <div className="subtopic-form-heading"><div><p className="eyebrow">{editingId === 'new' ? `NEW ${singular.toUpperCase()}` : `EDIT ${singular.toUpperCase()}`}</p></div></div>
+          <div className="form-grid">
+            <label className="field field-full"><span>Name</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value, ...(editingId === 'new' ? { slug: slugify(event.target.value) } : {}) })} maxLength={100} required placeholder={placeholder} /></label>
+            <label className="field field-full"><span>Slug <small>Used in the learner URL</small></span><input value={form.slug} onChange={(event) => setForm({ ...form, slug: slugify(event.target.value) })} maxLength={100} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required /></label>
+            {kind === 'technology' && <label className="field"><span>Icon <small>Optional key</small></span><input value={form.icon} onChange={(event) => setForm({ ...form, icon: slugify(event.target.value) })} maxLength={50} placeholder="javascript" /></label>}
+            <label className="field"><span>Order <small>Optional</small></span><input type="number" min="0" step="1" value={form.order} onChange={(event) => setForm({ ...form, order: event.target.value })} placeholder="Last" /></label>
+            <label className="checkbox-field field-full"><input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} /><span>Visible to learners</span></label>
+          </div>
+          <div className="form-actions"><button className="button button-secondary button-small" type="button" onClick={() => setEditingId(null)}>Cancel</button><button className="button button-primary button-small" type="submit" disabled={busy}>{busy ? 'Saving…' : editingId === 'new' ? `Add ${singular}` : 'Save'}</button></div>
+        </form>
+      )}
+      {items.length ? (
+        <div className="catalog-list">{items.map((item) => {
+          const copy = <>
+            <span className="topic-select-mark">{item.order}</span>
+            <span className="topic-select-copy"><strong>{item.name}</strong><small>/{item.slug} · {describe(item)}</small></span>
+            {item.isActive === false && <span className="catalog-badge">Hidden</span>}
+          </>
+          return (
+            <div className={`catalog-row ${item._id === selectedId ? 'selected' : ''}`} key={item._id}>
+              {onSelect
+                ? <button className="catalog-select" type="button" onClick={() => onSelect(item._id)} aria-pressed={item._id === selectedId}>{copy}</button>
+                : <div className="catalog-select">{copy}</div>}
+              <button className="icon-button" type="button" aria-label={`Edit ${item.name}`} onClick={() => beginEdit(item)}>✎</button>
+              <button className="icon-button icon-button-danger" type="button" aria-label={`Delete ${item.name}`} onClick={() => remove(item)}>×</button>
+            </div>
+          )
+        })}</div>
+      ) : <EmptyState title={`No ${plural} yet`} detail={emptyDetail} />}
+    </section>
   )
 }
 
-function emptyTopic() {
-  return { name: '', slug: '', description: '' }
-}
-
-function emptySubtopic() {
-  return { name: '', slug: '', description: '' }
-}
-
-function TopicForm({ form, setForm, isNew, busy, onCancel, onSubmit }) {
-  return <section className="panel edit-panel"><div className="panel-heading"><div><p className="eyebrow">TOPIC DETAILS</p><h2>{isNew ? 'Create topic' : 'Edit topic'}</h2></div></div>
-    <form className="stack-form" onSubmit={onSubmit}>
-      <label className="field"><span>Name</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value, ...(isNew ? { slug: slugify(event.target.value) } : {}) })} maxLength={100} required placeholder="e.g. JavaScript Basics" /></label>
-      <label className="field"><span>Slug <small>URL-friendly identifier</small></span><input value={form.slug} onChange={(event) => setForm({ ...form, slug: slugify(event.target.value) })} maxLength={100} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required placeholder="javascript-basics" /></label>
-      <label className="field"><span>Description <small>Optional</small></span><textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={500} rows={3} placeholder="A short introduction to this topic…" /></label>
-      <div className="form-actions"><button className="button button-secondary" type="button" onClick={onCancel}>Cancel</button><button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Saving…' : isNew ? 'Create topic' : 'Save changes'}</button></div>
-    </form>
-  </section>
-}
-
-function SubtopicForm({ form, setForm, isNew, busy, onCancel, onSubmit }) {
-  return <form className="subtopic-form" onSubmit={onSubmit}>
-    <div className="subtopic-form-heading"><div><p className="eyebrow">{isNew ? 'NEW SUBTOPIC' : 'EDIT SUBTOPIC'}</p><h3>{isNew ? 'Add a subtopic' : 'Update subtopic'}</h3></div></div>
-    <div className="form-grid">
-      <label className="field"><span>Name</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value, ...(isNew ? { slug: slugify(event.target.value) } : {}) })} maxLength={100} required placeholder="e.g. Closures" /></label>
-      <label className="field"><span>Slug</span><input value={form.slug} onChange={(event) => setForm({ ...form, slug: slugify(event.target.value) })} maxLength={100} required placeholder="closures" /></label>
-      <label className="field field-full"><span>Description <small>Optional</small></span><input value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={500} placeholder="Short description" /></label>
-    </div>
-    <div className="form-actions"><button className="button button-secondary button-small" type="button" onClick={onCancel}>Cancel</button><button className="button button-primary button-small" type="submit" disabled={busy}>{busy ? 'Saving…' : isNew ? 'Add subtopic' : 'Save subtopic'}</button></div>
-  </form>
-}
-
-function QuestionsPage({ topics, questions, refresh, notify, createOnLoad, theme }) {
+function QuestionsPage({ technologies, questions, refresh, notify, createOnLoad, theme }) {
+  const [technologyFilter, setTechnologyFilter] = useState('')
+  const [sectionFilter, setSectionFilter] = useState('')
   const [topicFilter, setTopicFilter] = useState('')
-  const [subtopicFilter, setSubtopicFilter] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyQuestion)
   const [busy, setBusy] = useState(false)
   const [search, setSearch] = useState('')
-  const availableSubtopics = useMemo(() => topics.find((topic) => topic._id === topicFilter)?.subtopics ?? [], [topics, topicFilter])
+  const [orderOverride, setOrderOverride] = useState(null)
+  const [draggedQuestionId, setDraggedQuestionId] = useState(null)
+  const [dragOverQuestionId, setDragOverQuestionId] = useState(null)
+  const [isReordering, setIsReordering] = useState(false)
+  const draggedQuestionRef = useRef(null)
+  const catalogIndex = useMemo(() => indexCatalog(technologies), [technologies])
+  const availableSections = catalogIndex.technologyById.get(technologyFilter)?.sections ?? []
+  const availableTopics = catalogIndex.sectionById.get(sectionFilter)?.topics ?? []
+  const hasTopics = catalogIndex.topicById.size > 0
   const filteredQuestions = useMemo(() => {
     const searchText = search.trim().toLowerCase()
     return questions.filter((question) => (
-      (!topicFilter || question.topic === topicFilter)
-      && (!subtopicFilter || question.subtopic === subtopicFilter)
+      (!technologyFilter || question.technologyId === technologyFilter)
+      && (!sectionFilter || question.sectionId === sectionFilter)
+      && (!topicFilter || question.topicId === topicFilter)
       && (!searchText || question.title.toLowerCase().includes(searchText))
     ))
-  }, [questions, search, subtopicFilter, topicFilter])
+  }, [questions, search, technologyFilter, sectionFilter, topicFilter])
+  const canReorder = Boolean(topicFilter) && !search.trim()
+  const displayedQuestions = useMemo(() => {
+    if (orderOverride?.topicId !== topicFilter) return filteredQuestions
+    const order = new Map(orderOverride.ids.map((id, index) => [id, index]))
+    return [...filteredQuestions].sort((a, b) => (order.get(a._id) ?? Infinity) - (order.get(b._id) ?? Infinity))
+  }, [filteredQuestions, orderOverride, topicFilter])
 
+  // Drop filters that point at records deleted since they were chosen.
   useEffect(() => {
-    if (subtopicFilter && !availableSubtopics.some((subtopic) => subtopic._id === subtopicFilter)) setSubtopicFilter('')
-  }, [availableSubtopics, subtopicFilter])
+    if (technologyFilter && !catalogIndex.technologyById.has(technologyFilter)) setTechnologyFilter('')
+    if (sectionFilter && !catalogIndex.sectionById.has(sectionFilter)) setSectionFilter('')
+    if (topicFilter && !catalogIndex.topicById.has(topicFilter)) setTopicFilter('')
+  }, [catalogIndex, technologyFilter, sectionFilter, topicFilter])
 
   function startNew() {
-    const topic = topics.find((item) => item._id === topicFilter) ?? topics[0]
-    const subtopic = topic?.subtopics?.find((item) => item._id === subtopicFilter) ?? topic?.subtopics?.[0]
     setEditingId('new')
-    setForm({ ...emptyQuestion(), topic: topic?._id ?? '', subtopic: subtopic?._id ?? '' })
+    setForm({
+      ...emptyQuestion(),
+      ...firstPlacement(technologies, { technologyId: technologyFilter, sectionId: sectionFilter, topicId: topicFilter }),
+    })
   }
 
   useEffect(() => {
-    if (createOnLoad && topics.length) startNew()
-  }, [createOnLoad, topics.length])
+    if (createOnLoad && technologies.length) startNew()
+  }, [createOnLoad, technologies.length])
 
   function startEdit(question) {
     setEditingId(question._id)
     setForm({
-      topic: question.topic,
-      subtopic: question.subtopic,
+      technologyId: question.technologyId,
+      sectionId: question.sectionId,
+      topicId: question.topicId,
       title: question.title,
       label: question.label ?? 'SHORT ANSWER',
       content: question.content ?? [],
@@ -355,9 +367,11 @@ function QuestionsPage({ topics, questions, refresh, notify, createOnLoad, theme
     setBusy(true)
     try {
       const isNew = editingId === 'new'
+      // Technology and section only drive the pickers; the API derives them from the topic.
+      const { technologyId: _technologyId, sectionId: _sectionId, ...body } = form
       await apiRequest(isNew ? '/admin/questions' : `/admin/questions/${editingId}`, {
         method: isNew ? 'POST' : 'PATCH',
-        body: form,
+        body,
       })
       setEditingId(null)
       await refresh()
@@ -380,13 +394,64 @@ function QuestionsPage({ topics, questions, refresh, notify, createOnLoad, theme
     }
   }
 
+  async function saveQuestionOrder(orderedQuestions) {
+    const questionIds = orderedQuestions.map((question) => question._id)
+    setOrderOverride({ topicId: topicFilter, ids: questionIds })
+    setIsReordering(true)
+    try {
+      await apiRequest('/admin/questions/reorder', {
+        method: 'PATCH',
+        body: { topicId: topicFilter, questionIds },
+      })
+      await refresh()
+      setOrderOverride(null)
+      notify('Question order saved.')
+    } catch (error) {
+      setOrderOverride(null)
+      try {
+        await refresh()
+      } catch (refreshError) {
+        notify(`${error.message} Questions could not be refreshed: ${refreshError.message}`, 'error')
+        return
+      }
+      notify(error.message, 'error')
+    } finally {
+      setIsReordering(false)
+      draggedQuestionRef.current = null
+      setDraggedQuestionId(null)
+      setDragOverQuestionId(null)
+    }
+  }
+
+  function dropQuestion(targetId) {
+    const sourceId = draggedQuestionRef.current
+    if (!sourceId || sourceId === targetId || !canReorder || isReordering) return
+    const reordered = [...displayedQuestions]
+    const sourceIndex = reordered.findIndex((question) => question._id === sourceId)
+    const targetIndex = reordered.findIndex((question) => question._id === targetId)
+    if (sourceIndex < 0 || targetIndex < 0) return
+    const [question] = reordered.splice(sourceIndex, 1)
+    reordered.splice(targetIndex, 0, question)
+    void saveQuestionOrder(reordered)
+  }
+
+  function moveQuestion(questionId, offset) {
+    const index = displayedQuestions.findIndex((question) => question._id === questionId)
+    const targetIndex = index + offset
+    if (index < 0 || targetIndex < 0 || targetIndex >= displayedQuestions.length || isReordering) return
+    const reordered = [...displayedQuestions]
+    const [question] = reordered.splice(index, 1)
+    reordered.splice(targetIndex, 0, question)
+    void saveQuestionOrder(reordered)
+  }
+
   return (
     <>
-      <div className="page-heading"><div><p className="eyebrow">QUESTION BANK</p><h1>Question library</h1><p className="page-subtitle">Create and manage short-answer questions.</p></div><button className="button button-primary" type="button" onClick={startNew} disabled={!topics.some((topic) => topic.subtopics?.length)}>＋ Create question</button></div>
+      <div className="page-heading"><div><p className="eyebrow">QUESTION BANK</p><h1>Question library</h1><p className="page-subtitle">Create and manage short-answer questions.</p></div><button className="button button-primary" type="button" onClick={startNew} disabled={!hasTopics}>＋ Create question</button></div>
       {editingId !== null && <QuestionForm
         form={form}
         setForm={setForm}
-        topics={topics}
+        technologies={technologies}
         theme={theme}
         busy={busy}
         isNew={editingId === 'new'}
@@ -396,20 +461,54 @@ function QuestionsPage({ topics, questions, refresh, notify, createOnLoad, theme
       <section className="panel question-library">
         <div className="filter-row">
           <label className="search-field"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions…" /></label>
-          <select aria-label="Filter by topic" value={topicFilter} onChange={(event) => { setTopicFilter(event.target.value); setSubtopicFilter('') }}><option value="">All topics</option>{topics.map((topic) => <option value={topic._id} key={topic._id}>{topic.name}</option>)}</select>
-          <select aria-label="Filter by subtopic" value={subtopicFilter} onChange={(event) => setSubtopicFilter(event.target.value)} disabled={!availableSubtopics.length}><option value="">All subtopics</option>{availableSubtopics.map((subtopic) => <option value={subtopic._id} key={subtopic._id}>{subtopic.name}</option>)}</select>
+          <select aria-label="Filter by technology" value={technologyFilter} onChange={(event) => { setTechnologyFilter(event.target.value); setSectionFilter(''); setTopicFilter('') }}><option value="">All technologies</option>{technologies.map((technology) => <option value={technology._id} key={technology._id}>{technology.name}</option>)}</select>
+          <select aria-label="Filter by section" value={sectionFilter} onChange={(event) => { setSectionFilter(event.target.value); setTopicFilter('') }} disabled={!availableSections.length}><option value="">All sections</option>{availableSections.map((section) => <option value={section._id} key={section._id}>{section.name}</option>)}</select>
+          <select aria-label="Filter by topic" value={topicFilter} onChange={(event) => setTopicFilter(event.target.value)} disabled={!availableTopics.length}><option value="">All topics</option>{availableTopics.map((topic) => <option value={topic._id} key={topic._id}>{topic.name}</option>)}</select>
         </div>
-        {filteredQuestions.length === 0 ? <EmptyState title={questions.length ? 'No matching questions' : 'Your question library is empty'} detail={questions.length ? 'Try changing the search or filters.' : 'Create a topic and subtopic, then write your first MCQ.'} /> : (
-          <div className="table-wrap"><table><thead><tr><th>Question</th><th>Topic / subtopic</th><th>Resources</th><th className="actions-heading">Actions</th></tr></thead><tbody>
-            {filteredQuestions.map((question) => <tr key={question._id}>
+        <div className="question-order-hint" role="status">{canReorder ? 'Drag questions to set their display order. Use the arrow buttons to move a question with the keyboard.' : 'Choose a technology, section and topic, and clear search to reorder questions.'}{isReordering && <span> Saving order…</span>}</div>
+        {displayedQuestions.length === 0 ? <EmptyState title={questions.length ? 'No matching questions' : 'Your question library is empty'} detail={questions.length ? 'Try changing the search or filters.' : 'Create a technology, section and topic, then write your first question.'} /> : (
+          <div className="table-wrap"><table><thead><tr>{canReorder && <th className="order-heading">Order</th>}<th>Question</th><th>Technology / topic</th><th>Resources</th><th className="actions-heading">Actions</th></tr></thead><tbody>
+            {displayedQuestions.map((question, index) => <tr
+              key={question._id}
+              className={`${canReorder ? 'question-order-row' : ''} ${dragOverQuestionId === question._id ? 'drag-over' : ''}`}
+              draggable={canReorder && !isReordering}
+              onDragStart={(event) => {
+                draggedQuestionRef.current = question._id
+                setDraggedQuestionId(question._id)
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('text/plain', question._id)
+              }}
+              onDragOver={(event) => {
+                if (!canReorder || isReordering) return
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+                setDragOverQuestionId(question._id)
+              }}
+              onDrop={(event) => {
+                event.preventDefault()
+                dropQuestion(question._id)
+              }}
+              onDragEnd={() => {
+                draggedQuestionRef.current = null
+                setDraggedQuestionId(null)
+                setDragOverQuestionId(null)
+              }}
+            >
+              {canReorder && <td className="order-cell">
+                <span className={`drag-handle ${draggedQuestionId === question._id ? 'is-dragging' : ''}`} aria-hidden="true" title="Drag to reorder">⠿</span>
+                <span className="order-buttons">
+                  <button type="button" aria-label={`Move ${question.title} up`} title="Move up" disabled={index === 0 || isReordering} onClick={() => moveQuestion(question._id, -1)}>↑</button>
+                  <button type="button" aria-label={`Move ${question.title} down`} title="Move down" disabled={index === displayedQuestions.length - 1 || isReordering} onClick={() => moveQuestion(question._id, 1)}>↓</button>
+                </span>
+              </td>}
               <td className="question-cell"><strong>{question.title}</strong><small>Short answer · {question.label}</small></td>
-              <td>{topicName(topics, question.topic)}<small className="table-secondary">{subtopicName(topics, question.subtopic)}</small></td>
+              <td>{nameOf(catalogIndex.technologyById, question.technologyId)}<small className="table-secondary">{nameOf(catalogIndex.sectionById, question.sectionId)} › {nameOf(catalogIndex.topicById, question.topicId)}</small></td>
               <td>{[question.mediumUrl, question.compilerUrl].filter(Boolean).length || '—'}</td>
               <td className="actions-cell"><button className="button button-secondary button-small" type="button" onClick={() => startEdit(question)}>Edit</button><button className="button button-danger button-small" type="button" onClick={() => deleteQuestion(question)}>Delete</button></td>
             </tr>)}
           </tbody></table></div>
         )}
-        <div className="table-footer">Showing {filteredQuestions.length} of {questions.length} questions</div>
+        <div className="table-footer">Showing {displayedQuestions.length} of {questions.length} questions</div>
       </section>
     </>
   )
@@ -417,8 +516,9 @@ function QuestionsPage({ topics, questions, refresh, notify, createOnLoad, theme
 
 function emptyQuestion() {
   return {
-    topic: '',
-    subtopic: '',
+    technologyId: '',
+    sectionId: '',
+    topicId: '',
     title: '',
     label: 'SHORT ANSWER',
     content: [],
@@ -428,9 +528,9 @@ function emptyQuestion() {
   }
 }
 
-function QuestionForm({ form, setForm, topics, theme, busy, isNew, onCancel, onSubmit }) {
-  const activeTopic = topics.find((topic) => topic._id === form.topic)
-  const subtopics = activeTopic?.subtopics ?? []
+function QuestionForm({ form, setForm, technologies, theme, busy, isNew, onCancel, onSubmit }) {
+  const sections = technologies.find((technology) => technology._id === form.technologyId)?.sections ?? []
+  const topics = sections.find((section) => section._id === form.sectionId)?.topics ?? []
   const [formattingIndex, setFormattingIndex] = useState(null)
   const [formatError, setFormatError] = useState('')
 
@@ -475,8 +575,9 @@ function QuestionForm({ form, setForm, topics, theme, busy, isNew, onCancel, onS
     <div className="panel-heading"><div><p className="eyebrow">{isNew ? 'NEW QUESTION' : 'EDIT QUESTION'}</p><h2>{isNew ? 'Create a short-answer question' : 'Update question'}</h2></div><button className="icon-button editor-close" type="button" aria-label="Close editor" onClick={onCancel}>×</button></div>
     <form className="stack-form" onSubmit={onSubmit}>
       <div className="form-grid">
-        <label className="field"><span>Topic</span><select value={form.topic} onChange={(event) => { const topic = topics.find((item) => item._id === event.target.value); setForm({ ...form, topic: event.target.value, subtopic: topic?.subtopics?.[0]?._id ?? '' }) }} required><option value="">Choose a topic</option>{topics.map((topic) => <option value={topic._id} key={topic._id}>{topic.name}</option>)}</select></label>
-        <label className="field"><span>Subtopic</span><select value={form.subtopic} onChange={(event) => setForm({ ...form, subtopic: event.target.value })} required disabled={!subtopics.length}><option value="">Choose a subtopic</option>{subtopics.map((subtopic) => <option value={subtopic._id} key={subtopic._id}>{subtopic.name}</option>)}</select></label>
+        <label className="field"><span>Technology</span><select value={form.technologyId} onChange={(event) => setForm({ ...form, ...firstPlacement(technologies, { technologyId: event.target.value }) })} required><option value="">Choose a technology</option>{technologies.map((technology) => <option value={technology._id} key={technology._id}>{technology.name}</option>)}</select></label>
+        <label className="field"><span>Section</span><select value={form.sectionId} onChange={(event) => setForm({ ...form, ...firstPlacement(technologies, { technologyId: form.technologyId, sectionId: event.target.value }) })} required disabled={!sections.length}><option value="">Choose a section</option>{sections.map((section) => <option value={section._id} key={section._id}>{section.name}</option>)}</select></label>
+        <label className="field"><span>Topic</span><select value={form.topicId} onChange={(event) => setForm({ ...form, topicId: event.target.value })} required disabled={!topics.length}><option value="">Choose a topic</option>{topics.map((topic) => <option value={topic._id} key={topic._id}>{topic.name}</option>)}</select></label>
         <label className="field field-full"><span>Question</span><textarea value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={300} rows={2} required placeholder="Write a clear question…" /></label>
         <label className="field"><span>Label <small>Optional</small></span><input value={form.label} onChange={(event) => setForm({ ...form, label: event.target.value })} maxLength={60} placeholder="SHORT ANSWER" /></label>
       </div>
@@ -511,7 +612,7 @@ function QuestionForm({ form, setForm, topics, theme, busy, isNew, onCancel, onS
         <label className="field"><span>Medium article URL <small>Optional</small></span><input type="url" value={form.mediumUrl} onChange={(event) => setForm({ ...form, mediumUrl: event.target.value })} maxLength={2048} placeholder="https://medium.com/…" /></label>
         <label className="field"><span>Online code compiler URL <small>Optional</small></span><input type="url" value={form.compilerUrl} onChange={(event) => setForm({ ...form, compilerUrl: event.target.value })} maxLength={2048} placeholder="https://…" /></label>
       </div>
-      <div className="form-actions"><button className="button button-secondary" type="button" onClick={onCancel}>Cancel</button><button className="button button-primary" type="submit" disabled={busy || !subtopics.length}>{busy ? 'Saving…' : isNew ? 'Create question' : 'Save changes'}</button></div>
+      <div className="form-actions"><button className="button button-secondary" type="button" onClick={onCancel}>Cancel</button><button className="button button-primary" type="submit" disabled={busy || !topics.length}>{busy ? 'Saving…' : isNew ? 'Create question' : 'Save changes'}</button></div>
     </form>
   </section>
 }
@@ -521,7 +622,7 @@ function App() {
   const [admin, setAdmin] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [activePage, setActivePage] = useState('overview')
-  const [topics, setTopics] = useState([])
+  const [technologies, setTechnologies] = useState([])
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState(null)
@@ -539,11 +640,11 @@ function App() {
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const [topicData, questionData] = await Promise.all([
-        apiRequest('/admin/topics'),
+      const [catalogData, questionData] = await Promise.all([
+        apiRequest('/admin/catalog'),
         apiRequest('/admin/questions'),
       ])
-      setTopics(topicData.topics)
+      setTechnologies(catalogData.technologies)
       setQuestions(questionData.questions)
     } finally {
       setLoading(false)
@@ -582,7 +683,7 @@ function App() {
     try {
       await apiRequest('/auth/logout', { method: 'POST' })
       setAdmin(null)
-      setTopics([])
+      setTechnologies([])
       setQuestions([])
       setActivePage('overview')
     } catch (error) {
@@ -617,9 +718,9 @@ function App() {
         <div className="content-area">
           {notice && <div className={`toast ${notice.type === 'error' ? 'toast-error' : ''}`} role={notice.type === 'error' ? 'alert' : 'status'}><span>{notice.type === 'error' ? '!' : '✓'}</span>{notice.message}<button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div>}
           {loading && <div className="loading-line"><span /> Syncing content…</div>}
-          {activePage === 'overview' && <Overview topics={topics} questions={questions} onNavigate={navigate} />}
-          {activePage === 'topics' && <TopicsPage topics={topics} refresh={refresh} notify={notify} />}
-          {activePage === 'questions' && <QuestionsPage topics={topics} questions={questions} refresh={refresh} notify={notify} createOnLoad={createQuestionOnLoad} theme={theme} />}
+          {activePage === 'overview' && <Overview technologies={technologies} questions={questions} onNavigate={navigate} />}
+          {activePage === 'catalog' && <CatalogPage technologies={technologies} refresh={refresh} notify={notify} />}
+          {activePage === 'questions' && <QuestionsPage technologies={technologies} questions={questions} refresh={refresh} notify={notify} createOnLoad={createQuestionOnLoad} theme={theme} />}
         </div>
       </main>
     </div>

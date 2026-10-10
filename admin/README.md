@@ -22,6 +22,6 @@ The development server proxies `/api` to `http://localhost:3000`. The backend `A
 - Overview with topic, subtopic, question, and resource-link counts.
 - Topic and subtopic creation, editing, and deletion.
 - Short-answer question creation, editing, and deletion, including the answer shown to learners, optional Medium and online compiler links, and optional text/code/JSON prompt blocks. Code blocks can be formatted in the editor.
-- Topic/subtopic/search filtering in the question library.
+- Topic/subtopic/search filtering in the question library. Select one subtopic and clear the search to drag questions into their learner display order; arrow controls are also available for keyboard-based reordering.
 
 New content is immediately available in the public learner app.

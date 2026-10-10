@@ -276,6 +276,19 @@ tbody tr:hover { background: #fcfcfd; }
 .actions-heading { text-align: right; }
 .actions-cell { white-space: nowrap; text-align: right; }
 .actions-cell .button + .button { margin-left: 5px; }
+.question-order-hint { padding: 9px 15px; border-bottom: 1px solid #eff1f4; color: #8792a1; font-size: 9px; }
+.question-order-hint span { color: #5368d9; font-weight: 700; }
+.order-heading { width: 84px; }
+.order-cell { width: 84px; white-space: nowrap; }
+.order-buttons { display: inline-grid; gap: 3px; margin-left: 8px; vertical-align: middle; }
+.order-buttons button { width: 21px; height: 18px; padding: 0; border: 1px solid #e1e5eb; border-radius: 3px; color: #667386; background: #fff; line-height: 1; cursor: pointer; }
+.order-buttons button:hover:not(:disabled) { border-color: #bfc9d6; background: #f5f7fa; }
+.order-buttons button:disabled { opacity: .4; cursor: not-allowed; }
+.drag-handle { display: inline-block; color: #8995a5; font-size: 18px; vertical-align: middle; cursor: grab; user-select: none; }
+.drag-handle.is-dragging { color: #5368d9; cursor: grabbing; }
+.question-order-row { cursor: grab; }
+.question-order-row:active { cursor: grabbing; }
+.question-order-row.drag-over td { border-top: 2px solid #596ee8; background: #f3f5ff; }
 .table-footer { padding: 11px 16px; border-top: 1px solid #eff1f4; color: #a0a9b5; font-size: 9px; }
 .toast { position: fixed; top: 69px; right: 24px; z-index: 10; display: flex; max-width: min(420px, calc(100vw - 32px)); align-items: center; gap: 9px; padding: 11px 12px; border: 1px solid #d4eadb; border-radius: 6px; color: #347a4f; background: #f4fbf6; box-shadow: 0 8px 25px rgb(29 43 64 / 12%); font-size: 11px; }
 .toast > span { display: grid; width: 18px; height: 18px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: white; background: #57a873; font-size: 10px; }
@@ -486,8 +499,25 @@ tbody tr:hover { background: #fcfcfd; }
   color: #9ba8b8;
 }
 :root[data-theme='dark'] .filter-row,
-:root[data-theme='dark'] .table-footer {
+:root[data-theme='dark'] .table-footer,
+:root[data-theme='dark'] .question-order-hint {
   border-color: #303b49;
+}
+:root[data-theme='dark'] .order-buttons button {
+  border-color: #3b4858;
+  color: #cbd5e1;
+  background: #202b38;
+}
+:root[data-theme='dark'] .order-buttons button:hover:not(:disabled) {
+  border-color: #58677a;
+  background: #2b3948;
+}
+:root[data-theme='dark'] .drag-handle {
+  color: #9ba8b8;
+}
+:root[data-theme='dark'] .question-order-row.drag-over td {
+  border-top-color: #98a6ff;
+  background: #283149;
 }
 :root[data-theme='dark'] .admin-tag {
   color: #c1ccd9;
@@ -586,4 +616,28 @@ tbody tr:hover { background: #fcfcfd; }
   .actions-cell .button { padding: 0 7px; }
   .toast { top: 51px; right: 8px; }
   .loading-line { right: 14px; }
+}
+
+/* Content structure: technology › section › topic columns */
+.catalog-layout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 15px; }
+.catalog-panel { overflow: hidden; }
+.catalog-panel .panel-heading { padding-bottom: 13px; }
+.catalog-list { display: grid; gap: 3px; padding: 0 8px 10px; }
+.catalog-row { display: flex; min-width: 0; align-items: center; gap: 4px; padding-right: 4px; border: 1px solid transparent; border-radius: 5px; }
+.catalog-row:hover { background: #f8f9fb; }
+.catalog-row.selected { border-color: #e4e8fb; background: #f4f5ff; }
+.catalog-select { display: flex; min-width: 0; flex: 1; align-items: center; gap: 9px; padding: 10px 9px; border: 0; color: inherit; background: transparent; text-align: left; }
+button.catalog-select { cursor: pointer; }
+.catalog-badge { flex: 0 0 auto; padding: 3px 6px; border-radius: 999px; color: #8a6d1d; background: #fff4cf; font-size: 8px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+.checkbox-field { display: flex; align-items: center; gap: 8px; color: #4a576a; font-size: 10px; font-weight: 650; cursor: pointer; }
+.checkbox-field input { width: 15px; height: 15px; margin: 0; accent-color: var(--blue); }
+:root[data-theme='dark'] .catalog-row:hover { background: #202b37; }
+:root[data-theme='dark'] .catalog-row.selected { border-color: #3a4766; background: #24304a; }
+:root[data-theme='dark'] .catalog-badge { color: #f3d27a; background: #3b3220; }
+:root[data-theme='dark'] .checkbox-field { color: #c5cfdb; }
+@media (max-width: 1050px) {
+  .catalog-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .catalog-layout { grid-template-columns: 1fr; }
 }

@@ -1,34 +1,74 @@
 import { Question } from '../models/Question.js'
-import { Subtopic } from '../models/Subtopic.js'
 import { Topic } from '../models/Topic.js'
 import { HttpError } from '../utils/errors.js'
+import { findPublicTopic } from './catalogService.js'
 
 export async function listQuestions(filter) {
   return Question.find(filter)
-    .select('topic subtopic title label content answer mediumUrl compilerUrl createdAt updatedAt')
-    .sort({ createdAt: 1 })
+    .select('technologyId sectionId topicId displayOrder title label content answer mediumUrl compilerUrl createdAt updatedAt')
+    .sort({ displayOrder: 1, createdAt: 1, _id: 1 })
     .lean()
 }
 
+// Questions are placed by topic; the technology and section are always copied from that topic.
+async function resolvePlacement(topicId) {
+  const topic = await Topic.findById(topicId).select('technologyId sectionId').lean()
+  if (!topic) throw new HttpError(400, 'Choose an existing topic')
+  return { technologyId: topic.technologyId, sectionId: topic.sectionId, topicId: topic._id }
+}
+
+async function nextDisplayOrder(topicId) {
+  const lastQuestion = await Question.findOne({ topicId })
+    .sort({ displayOrder: -1, createdAt: -1 })
+    .select('displayOrder')
+    .lean()
+  return Number(lastQuestion?.displayOrder ?? 0) + (lastQuestion ? 1 : 0)
+}
+
 export async function createQuestion(input) {
-  const subtopic = await Subtopic.findOne({ _id: input.subtopic, topic: input.topic })
-  if (!subtopic) throw new HttpError(400, 'Subtopic must belong to the selected topic')
-  return Question.create(input)
+  const placement = await resolvePlacement(input.topicId)
+  return Question.create({
+    ...input,
+    ...placement,
+    displayOrder: await nextDisplayOrder(placement.topicId),
+  })
 }
 
 export async function updateQuestion(id, input) {
   const question = await Question.findById(id)
   if (!question) throw new HttpError(404, 'Question not found')
 
-  const topicId = input.topic ?? question.topic.toString()
-  const subtopicId = input.subtopic ?? question.subtopic.toString()
-  if (!(await Subtopic.exists({ _id: subtopicId, topic: topicId }))) {
-    throw new HttpError(400, 'Subtopic must belong to the selected topic')
+  const { topicId, ...fields } = input
+  if (topicId && topicId !== question.topicId.toString()) {
+    const placement = await resolvePlacement(topicId)
+    Object.assign(fields, placement, { displayOrder: await nextDisplayOrder(placement.topicId) })
   }
 
-  Object.assign(question, input)
+  Object.assign(question, fields)
   await question.save()
   return question
+}
+
+export async function reorderQuestions(topicId, questionIds) {
+  const questions = await Question.find({ topicId })
+    .select('_id')
+    .lean()
+  if (questions.length !== questionIds.length) {
+    throw new HttpError(400, 'The order must include every question in the selected topic')
+  }
+
+  const existingIds = new Set(questions.map(({ _id }) => _id.toString()))
+  if (questionIds.some((id) => !existingIds.has(id.toLowerCase()))) {
+    throw new HttpError(400, 'The order contains a question outside the selected topic')
+  }
+
+  await Question.bulkWrite(questionIds.map((id, displayOrder) => ({
+    updateOne: {
+      filter: { _id: id, topicId },
+      update: { $set: { displayOrder } },
+    },
+  })))
+  return listQuestions({ topicId })
 }
 
 export async function deleteQuestion(id) {
@@ -36,21 +76,12 @@ export async function deleteQuestion(id) {
   if (!question) throw new HttpError(404, 'Question not found')
 }
 
-export async function listPublicQuestions(topicSlug, subtopicSlug) {
-  const topic = await Topic.findOne({ slug: topicSlug }).select('_id')
-  if (!topic) throw new HttpError(404, 'Topic not found')
-  const subtopic = await Subtopic.findOne({
-    topic: topic._id,
-    slug: subtopicSlug,
-  }).select('_id')
-  if (!subtopic) throw new HttpError(404, 'Subtopic not found')
+export async function listPublicQuestions(technologySlug, sectionSlug, topicSlug) {
+  const topic = await findPublicTopic(technologySlug, sectionSlug, topicSlug)
 
-  const questions = await Question.find({
-    topic: topic._id,
-    subtopic: subtopic._id,
-  })
+  const questions = await Question.find({ topicId: topic._id })
     .select('title label content answer mediumUrl compilerUrl')
-    .sort({ createdAt: 1 })
+    .sort({ displayOrder: 1, createdAt: 1, _id: 1 })
     .lean()
 
   return questions.map(({ _id, title, label, content, answer, mediumUrl, compilerUrl }) => ({
