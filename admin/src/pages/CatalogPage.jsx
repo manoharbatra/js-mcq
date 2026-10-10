@@ -42,7 +42,7 @@ function formFor(kind, item) {
 }
 
 function CatalogEditor({ editing, onClose, onSaved, notify }) {
-  const { kind, item, parentId, pathPrefix } = editing
+  const { kind, item, parentId } = editing
   const level = levels[kind]
   const isNew = !item
   const [form, setForm] = useState(() => formFor(kind, item))
@@ -84,13 +84,6 @@ function CatalogEditor({ editing, onClose, onSaved, notify }) {
             autoFocus
           />
         </label>
-        <div className="url-preview">
-          <span className="field-label">Learner URL</span>
-          <code>{pathPrefix}{item ? item.slug : '…'}</code>
-          <span className="field-hint">
-            {item ? 'Generated from the name. Renaming updates the URL.' : 'Generated from the name when you save.'}
-          </span>
-        </div>
         {kind === 'topic' && (
           <label className="field">
             <span className="field-label">Medium article URL <small>Optional</small></span>
@@ -231,8 +224,8 @@ export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) 
           items={technologies}
           selectedId={technology?._id}
           onSelect={(id) => { setTechnologyId(id); setSectionId('') }}
-          onAdd={() => setEditing({ kind: 'technology', item: null, pathPrefix: '/' })}
-          onEdit={(item) => setEditing({ kind: 'technology', item, pathPrefix: '/' })}
+          onAdd={() => setEditing({ kind: 'technology', item: null })}
+          onEdit={(item) => setEditing({ kind: 'technology', item })}
           onDelete={(item) => remove('technology', item)}
           describe={(item) => countLabel(item.sections.length, 'section')}
           emptyDetail="Add a technology such as JavaScript, React or System Design."
@@ -244,8 +237,8 @@ export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) 
           items={sections}
           selectedId={section?._id}
           onSelect={setSectionId}
-          onAdd={() => setEditing({ kind: 'section', item: null, parentId: technology._id, pathPrefix: `/${technology.slug}/` })}
-          onEdit={(item) => setEditing({ kind: 'section', item, pathPrefix: `/${technology.slug}/` })}
+          onAdd={() => setEditing({ kind: 'section', item: null, parentId: technology._id })}
+          onEdit={(item) => setEditing({ kind: 'section', item })}
           onDelete={(item) => remove('section', item)}
           describe={(item) => countLabel(item.topics.length, 'topic')}
           emptyDetail="Add a section such as Output Based or Concepts."
@@ -256,8 +249,8 @@ export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) 
           title="Topics"
           subtitle={section ? `In ${section.name}` : 'Choose a section'}
           items={section?.topics ?? []}
-          onAdd={() => setEditing({ kind: 'topic', item: null, parentId: section._id, pathPrefix: `/${technology.slug}/${section.slug}/` })}
-          onEdit={(item) => setEditing({ kind: 'topic', item, pathPrefix: `/${technology.slug}/${section.slug}/` })}
+          onAdd={() => setEditing({ kind: 'topic', item: null, parentId: section._id })}
+          onEdit={(item) => setEditing({ kind: 'topic', item })}
           onDelete={(item) => remove('topic', item)}
           describe={(item) => countLabel(item.questionCount, 'question')}
           renderExtra={(item) => (
