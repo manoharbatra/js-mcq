@@ -16,7 +16,7 @@ export function Overview({ title, description, cards, emptyTitle, emptyMessage }
           {cards.map((card) => (
             <section className="card topic-card" key={card.id} aria-labelledby={`card-${card.id}`}>
               <header className="topic-card-header">
-                <TopicBadge name={card.badgeName} icon={card.icon} size="lg" />
+                <TopicBadge name={card.badgeName} size="lg" />
                 <div>
                   <h2 id={`card-${card.id}`}>{card.name}</h2>
                   <span className="topic-card-count">{card.meta}</span>

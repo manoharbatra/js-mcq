@@ -140,7 +140,6 @@ function App() {
           id: item.id,
           name: item.name,
           badgeName: item.name,
-          icon: item.icon,
           meta: countLabel(item.sections.length, 'section'),
           emptyNote: 'No sections yet.',
           links: item.sections.map((sectionItem) => ({

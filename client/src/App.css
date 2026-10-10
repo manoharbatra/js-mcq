@@ -454,12 +454,6 @@ a {
 .tone-3 { color: #ffffff; background: #059669; }
 .tone-4 { color: #ffffff; background: #e11d48; }
 .tone-5 { color: #ffffff; background: #ea580c; }
-.tone-javascript { color: #3b2f00; background: #f7d23e; }
-.tone-typescript { color: #ffffff; background: #2f74c0; }
-.tone-react { color: #61dafb; background: #1e293b; }
-.tone-node { color: #ffffff; background: #3c873a; }
-.tone-system-design { color: #ffffff; background: #7c3aed; }
-.tone-ci-cd { color: #ffffff; background: #0e7490; }
 
 .nav-subtopic-name {
     min-width: 0;

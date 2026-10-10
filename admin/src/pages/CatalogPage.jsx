@@ -34,7 +34,6 @@ const levels = {
 function formFor(kind, item) {
   return {
     name: item?.name ?? '',
-    ...(kind === 'technology' ? { icon: item?.icon ?? '' } : {}),
     ...(kind === 'topic' ? { mediumUrl: item?.mediumUrl ?? '' } : {}),
     order: item ? String(item.order ?? '') : '',
     isActive: item ? item.isActive !== false : true,
@@ -92,12 +91,6 @@ function CatalogEditor({ editing, onClose, onSaved, notify }) {
           </label>
         )}
         <div className="field-row">
-          {kind === 'technology' && (
-            <label className="field">
-              <span className="field-label">Icon key <small>Optional</small></span>
-              <input value={form.icon} onChange={(event) => setForm({ ...form, icon: event.target.value })} maxLength={50} placeholder="javascript" />
-            </label>
-          )}
           <label className="field">
             <span className="field-label">Order <small>Optional</small></span>
             <input type="number" min="0" step="1" value={form.order} onChange={(event) => setForm({ ...form, order: event.target.value })} placeholder="Add to end" />

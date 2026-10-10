@@ -24,13 +24,10 @@ const nameSchema = z.string().trim()
   .min(1, 'Name is required')
   .max(100, 'Name must be 100 characters or fewer')
   .refine((value) => /[\p{L}\p{N}]/u.test(value), 'Name must contain at least one letter or number')
-const iconSchema = z.string().trim().max(50)
-  .transform((value) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''))
 const orderSchema = z.number().int().min(0).max(100000)
 
 export const technologySchema = z.object({
   name: nameSchema,
-  icon: iconSchema.optional(),
   order: orderSchema.optional(),
   isActive: z.boolean().optional(),
 }).strict()
