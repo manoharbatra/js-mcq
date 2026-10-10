@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { fetchCatalog } from './api.js'
 import { buildPath, navigate, parseRoute, usePathname } from './router.js'
 import { useTheme } from './useTheme.js'
-import { Icon } from './components/Icon.jsx'
+import { ChevronRight, Menu, Moon, Sun } from 'lucide-react'
 import { Link } from './components/Link.jsx'
 import { Overview } from './components/Overview.jsx'
 import { Sidebar } from './components/Sidebar.jsx'
@@ -35,7 +35,7 @@ function Breadcrumbs({ route, technology, section, topic }) {
           <li key={crumb.to}>
             {index === crumbs.length - 1
               ? <span aria-current="page">{crumb.label}</span>
-              : <><Link to={crumb.to}>{crumb.label}</Link><Icon name="chevronRight" size={14} className="crumb-divider" /></>}
+              : <><Link to={crumb.to}>{crumb.label}</Link><ChevronRight size={14} className="crumb-divider" /></>}
           </li>
         ))}
       </ol>
@@ -181,7 +181,7 @@ function App() {
             aria-controls="site-nav"
             aria-expanded={isNavOpen}
           >
-            <Icon name="menu" />
+            <Menu size={18} />
           </button>
           <Breadcrumbs route={route} technology={technology} section={section} topic={topic} />
           <button
@@ -191,7 +191,7 @@ function App() {
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
           >
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </header>
         <main className={`content ${topic ? 'content-split' : ''}`} ref={contentRef}>{page}</main>

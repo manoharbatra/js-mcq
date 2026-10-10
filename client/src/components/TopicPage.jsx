@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchQuestions } from '../api.js'
 import { buildPath } from '../router.js'
-import { Icon } from './Icon.jsx'
+import { BookOpen, ExternalLink, Layers, List } from 'lucide-react'
 import { Link } from './Link.jsx'
 import { QuestionPanel } from './QuestionPanel.jsx'
 import { StatusCard } from './StatusCard.jsx'
 
-function RailCard({ icon, title, children }) {
+function RailCard({ icon: IconComponent, title, children }) {
   return (
     <section className="card rail-card">
-      <h2 className="rail-title"><Icon name={icon} size={17} />{title}</h2>
+      <h2 className="rail-title"><IconComponent size={17} />{title}</h2>
       {children}
     </section>
   )
@@ -99,7 +99,7 @@ export function TopicPage({ technology, section, topic }) {
       </div>
 
       <aside className="rail" aria-label={`${topic.name} navigation`}>
-        <RailCard icon="layers" title={`Topics in ${section.name}`}>
+        <RailCard icon={Layers} title={`Topics in ${section.name}`}>
           <ul className="rail-list">
             {section.topics.map((item) => {
               const isCurrent = item.slug === topic.slug
@@ -121,19 +121,19 @@ export function TopicPage({ technology, section, topic }) {
         </RailCard>
 
         {activeQuestion && (activeQuestion.mediumUrl || activeQuestion.compilerUrl) && (
-          <RailCard icon="book" title="Concept Resources">
+          <RailCard icon={BookOpen} title="Concept Resources">
             <ul className="rail-list">
               {activeQuestion.mediumUrl && (
                 <li>
                   <a className="resource-link" href={activeQuestion.mediumUrl} target="_blank" rel="noopener noreferrer">
-                    <span>Read the concept article</span><Icon name="external" size={16} />
+                    <span>Read the concept article</span><ExternalLink size={16} />
                   </a>
                 </li>
               )}
               {activeQuestion.compilerUrl && (
                 <li>
                   <a className="resource-link" href={activeQuestion.compilerUrl} target="_blank" rel="noopener noreferrer">
-                    <span>Practice in the compiler</span><Icon name="external" size={16} />
+                    <span>Practice in the compiler</span><ExternalLink size={16} />
                   </a>
                 </li>
               )}
@@ -142,7 +142,7 @@ export function TopicPage({ technology, section, topic }) {
         )}
 
         {total > 1 && (
-          <RailCard icon="list" title="More Practice">
+          <RailCard icon={List} title="More Practice">
             <ol className="question-grid">
               {questions.map((item, index) => {
                 const number = index + 1

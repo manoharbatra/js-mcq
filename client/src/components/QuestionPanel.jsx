@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from './Icon.jsx'
+import { Check, Eye, EyeOff } from 'lucide-react'
 import { Prompt } from './PromptBlocks.jsx'
 
 export function QuestionPanel({ question, number, total }) {
@@ -25,12 +25,12 @@ export function QuestionPanel({ question, number, total }) {
           aria-controls={answerId}
           onClick={() => setIsAnswerVisible(true)}
         >
-          <Icon name="eye" /> Show Answer
+          <Eye size={18} /> Show Answer
         </button>
       )}
       <section id={answerId} className="answer-panel" aria-label="Answer" hidden={!isAnswerVisible}>
         <header className="answer-panel-header">
-          <h3><span className="answer-check"><Icon name="check" size={14} /></span>Answer</h3>
+          <h3><span className="answer-check"><Check size={14} strokeWidth={3} /></span>Answer</h3>
           <button
             className="button button-secondary button-sm"
             type="button"
@@ -38,7 +38,7 @@ export function QuestionPanel({ question, number, total }) {
             aria-controls={answerId}
             onClick={() => setIsAnswerVisible(false)}
           >
-            <Icon name="eyeOff" size={16} /> Hide Answer
+            <EyeOff size={16} /> Hide Answer
           </button>
         </header>
         <div className="answer-body">{question.answer}</div>

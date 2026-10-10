@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { buildPath } from "../router.js";
-import { Icon } from "./Icon.jsx";
+import { ChevronDown, House, X } from "lucide-react";
 import { Link } from "./Link.jsx";
-import { TopicBadge } from "./TopicBadge.jsx";
 
 export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug, isHome, isOpen, onClose }) {
     const [expandedTechnologies, setExpandedTechnologies] = useState({});
@@ -19,13 +18,13 @@ export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug,
                     </span>
                 </Link>
                 <button className="icon-button sidebar-close" type="button" onClick={onClose} aria-label="Close navigation">
-                    <Icon name="close" />
+                    <X size={18} />
                 </button>
             </div>
 
             <nav className="sidebar-nav">
                 <Link className={`nav-link ${isHome ? "active" : ""}`} to="/" aria-current={isHome ? "page" : undefined} onClick={onClose}>
-                    <Icon name="home" size={20} />
+                    <House size={20} />
                     Study topics
                 </Link>
 
@@ -51,9 +50,8 @@ export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug,
                                         aria-controls={listId}
                                         onClick={() => setExpandedTechnologies((current) => ({ ...current, [technology.slug]: !isExpanded }))}
                                     >
-                                        <TopicBadge name={technology.name} icon={technology.icon} size="sm" />
                                         <span className="nav-topic-name">{technology.name}</span>
-                                        <Icon name="chevronDown" size={16} className="nav-chevron" />
+                                        <ChevronDown size={16} className="nav-chevron" />
                                     </button>
                                     <ul className="nav-subtopics" id={listId} hidden={!isExpanded}>
                                         {technology.sections.length ? (

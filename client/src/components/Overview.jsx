@@ -1,4 +1,4 @@
-import { Icon } from './Icon.jsx'
+import { ChevronRight } from 'lucide-react'
 import { Link } from './Link.jsx'
 import { StatusCard } from './StatusCard.jsx'
 import { TopicBadge } from './TopicBadge.jsx'
@@ -31,7 +31,7 @@ export function Overview({ title, description, cards, emptyTitle, emptyMessage }
                           <strong>{link.name}</strong>
                           {link.meta && <small>{link.meta}</small>}
                         </span>
-                        <Icon name="chevronRight" size={16} />
+                        <ChevronRight size={16} />
                       </Link>
                     </li>
                   ))}
