@@ -14,10 +14,10 @@ export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug,
         <aside id="site-nav" className={`sidebar ${isOpen ? "is-open" : ""}`} aria-label="Study navigation">
             <div className="sidebar-head">
                 <Link className="brand" to="/" onClick={onClose}>
-                    <span className="brand-mark">MB</span>
+                    <span className="brand-mark">JS</span>
                     <span className="brand-text">
-                        <strong>Manohar Batra</strong>
-                        <small>College to Corporate</small>
+                        <strong>Dev Buddy</strong>
+                        <small>by Manohar Batra</small>
                     </span>
                 </Link>
             </div>
@@ -34,7 +34,6 @@ export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug,
                     ))}
                 </ul>
 
-                <p className="nav-label">Technologies</p>
                 {status === "loading" ? (
                     <p className="nav-message">Loading technologies…</p>
                 ) : status === "error" ? (

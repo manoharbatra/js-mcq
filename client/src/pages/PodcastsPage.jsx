@@ -63,9 +63,6 @@ export function PodcastsPage() {
   return (
     <div className="site podcasts-page">
       <div className="site-container podcasts-container">
-        <h1 className="site-page-title">Podcasts</h1>
-        <p className="podcasts-intro">Real conversations with people working across the industry, grouped by career track.</p>
-
         <div className="podcast-filters" role="group" aria-label="Filter by category">
           {[allCategories, ...podcastSections.map((section) => section.title)].map((name) => (
             <button

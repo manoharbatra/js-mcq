@@ -4,7 +4,6 @@ import { BookOpen, ChevronRight, Menu, Mic, Moon, Sun } from 'lucide-react'
 import { fetchCatalog } from './api.js'
 import { buildPath } from './paths.js'
 import { useTheme } from './useTheme.js'
-import { AnnouncementBar } from './components/announcementBar'
 import { Sidebar } from './components/sidebar'
 import { StatusCard } from './components/statusCard'
 
@@ -30,6 +29,9 @@ function Breadcrumbs({ pathname, slugs, technology, section, topic }) {
   if (slugs.topicSlug) {
     crumbs.push({ label: topic?.name ?? slugs.topicSlug, to: buildPath(slugs.technologySlug, slugs.sectionSlug, slugs.topicSlug) })
   }
+
+  // The home page has nothing to trail, so keep the (flexing) element as a spacer but show no text.
+  if (pathname === '/') return <div className="breadcrumbs" />
 
   return (
     <nav className="breadcrumbs" aria-label="Breadcrumb">
@@ -164,7 +166,6 @@ export function AppLayout() {
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </header>
-        {pathname === '/' && <AnnouncementBar />}
         <main className={`content ${topic ? 'content-split' : ''}`} ref={contentRef}>{content}</main>
       </div>
     </div>

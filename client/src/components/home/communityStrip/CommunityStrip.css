@@ -4,10 +4,11 @@
 }
 
 .community-strip ul {
+    padding: 0;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
+    gap: 8px;
     margin: 0 auto;
     list-style: none;
 }

@@ -7,7 +7,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 40px;
-    padding-top: 40px;
     padding-bottom: 48px;
 }
 
@@ -15,14 +14,13 @@
     display: grid;
     flex: 1;
     gap: 24px;
-    padding-left: 24px;
     animation: hero-enter 700ms ease both;
 }
 
 .hero-copy h1 {
     margin: 0;
     color: var(--site-text);
-    font-size: clamp(2rem, 1.3rem + 2.8vw, 3.25rem);
+    font-size: clamp(2rem, 1rem + 2vw, 3rem);
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.1;

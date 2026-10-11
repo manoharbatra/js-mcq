@@ -11,7 +11,6 @@ export function CoursesPage() {
 
         {courseCategories.map((category, categoryIndex) => (
           <section className="course-category" key={category.title} aria-labelledby={`course-category-${categoryIndex}`}>
-            <h2 id={`course-category-${categoryIndex}`}>{category.title}</h2>
             <ul className="course-grid">
               {category.courses.map((course) => (
                 <li className="course-card" key={course.href}>

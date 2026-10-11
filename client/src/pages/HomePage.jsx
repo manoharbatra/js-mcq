@@ -13,9 +13,7 @@ export function HomePage() {
     <div className="site">
       <HeroSection />
       <CommunityStrip />
-      <h2 className="site-page-title home-trust-title">Trusted by 150K+ learners worldwide. 🚀</h2>
-      <PeopleCarousel />
-      <GallerySection title="College Visits" items={collegeVisits} showCaptions cardWidth={280} />
+      {/* <GallerySection title="College Visits" items={collegeVisits} showCaptions cardWidth={280} /> */}
       <GallerySection
         title="Corporate Appreciations & Awards"
         items={corporateAppreciations}
@@ -32,7 +30,7 @@ export function HomePage() {
         cardWidth={300}
         imageFit="contain"
       />
-      <FeedbackWall />
+      {/* <FeedbackWall /> */}
       <AboutSection />
     </div>
   )

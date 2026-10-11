@@ -108,13 +108,12 @@ export const aboutParagraphs = [
 
 export const courseCategories = [
   {
-    title: 'No 1 Corporate Course',
     courses: [
       {
         image: '/images/course_banner/corporate_course.png',
         title: 'Switch Job in 3 months + Whatsapp Peer Support',
         description: 'Career growth, salary insights, referrals - Whatsapp group',
-        meta: '110+ Members',
+        meta: '200+ Members',
         href: 'https://topmate.io/manohar/1964588',
       },
       {
@@ -154,7 +153,7 @@ export const courseCategories = [
         image: '/images/course_banner/backend.png',
         title: '100% Interview Ready',
         description: '1:1 Guidance or Mock Interview on Java, Springboot, Kafka, System Design, and career.',
-        meta: '500+ Bookings',
+        meta: '100+ Bookings',
         href: 'https://topmate.io/manohar_batra/1751070',
       },
     ],
