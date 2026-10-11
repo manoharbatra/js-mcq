@@ -29,7 +29,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <figure className="hero-portrait">
+        <div className="hero-portrait">
           <img src={siteOwner.photo} alt={siteOwner.name} width="288" height="360" fetchPriority="high" />
           <figcaption className="hero-badge hero-badge-role">{heroBadges.role}</figcaption>
           <span className="hero-badge hero-badge-experience">{heroBadges.experience}</span>
@@ -38,7 +38,7 @@ export function HeroSection() {
               <img key={company.name} src={company.logo} alt="" height="28" />
             ))}
           </span>
-        </figure>
+        </div>
       </div>
     </section>
   )

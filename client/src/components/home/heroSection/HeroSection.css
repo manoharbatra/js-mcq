@@ -56,7 +56,6 @@
 .hero-portrait {
     position: relative;
     display: flex;
-    flex: 1;
     justify-content: center;
     margin: 0;
     padding-bottom: 28px;

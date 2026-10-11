@@ -17,8 +17,8 @@ export function CoursesPage() {
                   <img className="course-card-image" src={course.image} alt="" loading="lazy" />
                   <div className="course-card-body">
                     <h3>{course.title}</h3>
-                    <p>{course.description}</p>
-                    <span className="course-card-meta">{course.meta}</span>
+                    {/* <p>{course.description}</p> */}
+                    {/* <span className="course-card-meta">{course.meta}</span> */}
                     <a className="site-button course-card-cta" href={course.href} target="_blank" rel="noopener noreferrer">
                       Click Here <ArrowUpRight size={17} aria-hidden="true" />
                       <span className="visually-hidden"> to open {course.title} (opens in a new tab)</span>

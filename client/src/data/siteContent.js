@@ -130,11 +130,6 @@ export const courseCategories = [
         meta: '50+ Bookings',
         href: 'https://topmate.io/manohar/1973775',
       },
-    ],
-  },
-  {
-    title: 'Most Popular Downloads',
-    courses: [
       {
         image: '/images/course_banner/microfrontend.png',
         title: 'Microfrontend with React',
@@ -157,5 +152,5 @@ export const courseCategories = [
         href: 'https://topmate.io/manohar_batra/1751070',
       },
     ],
-  },
+  }
 ]
