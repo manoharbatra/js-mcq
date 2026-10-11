@@ -190,7 +190,7 @@ export function QuestionEditor({ form, setForm, technologies, theme, busy, isNew
             </label>
             <label className="field">
               <span className="field-label">Label <small>Optional</small></span>
-              <input value={form.label} onChange={(event) => setForm({ ...form, label: event.target.value })} maxLength={60} placeholder="SHORT ANSWER" />
+              <input value={form.label} onChange={(event) => setForm({ ...form, label: event.target.value })} maxLength={60} />
             </label>
           </section>
 

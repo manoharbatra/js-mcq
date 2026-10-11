@@ -120,7 +120,7 @@ export function TopicPage({ technology, section, topic }) {
                   <span className="rail-count">{isCurrent && status === 'ready' && !topic.isPaid ? total : item.questionCount}</span>
                 </>
               )
-              if (item.isPaid === true && !isCurrent) {
+              if ((item.isPaid === true || item.questionCount === 0) && !isCurrent) {
                 return (
                   <li key={item.id}>
                     <span className="rail-link is-disabled" aria-disabled="true">{content}</span>

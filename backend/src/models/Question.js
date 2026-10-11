@@ -15,7 +15,7 @@ const questionSchema = new mongoose.Schema(
     topicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic', required: true, index: true },
     displayOrder: { type: Number, required: true, min: 0, default: 0 },
     title: { type: String, required: true, trim: true, maxlength: 300 },
-    label: { type: String, trim: true, maxlength: 60, default: 'SHORT ANSWER' },
+    label: { type: String, trim: true, maxlength: 60, default: '' },
     content: { type: [contentPartSchema], default: [] },
     answer: { type: String, required: true, trim: true, maxlength: 10000 },
     mediumUrl: { type: String, trim: true, maxlength: 2048, default: '' },

@@ -21,7 +21,7 @@ export function TechnologyPage() {
           id: topic.id,
           name: topic.name,
           meta: countLabel(topic.questionCount, 'question'),
-          to: buildPath(technology.slug, section.slug, topic.slug),
+          to: topic.questionCount === 0 ? null : buildPath(technology.slug, section.slug, topic.slug),
         })),
       }))}
     />

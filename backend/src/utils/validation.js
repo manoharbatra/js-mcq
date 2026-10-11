@@ -67,7 +67,7 @@ export const topicSchema = z.object({
 const questionFieldsSchema = z.object({
   topicId: objectIdSchema,
   title: z.string().trim().min(1).max(300),
-  label: z.string().trim().max(60).optional().default('SHORT ANSWER'),
+  label: z.string().trim().max(60).optional().default(''),
   content: z.array(contentPartSchema).max(20).optional().default([]),
   answer: z.string().trim().min(1).max(10000),
   mediumUrl: optionalHttpUrlSchema,

@@ -18,12 +18,13 @@ export function SectionPage({ technology, section }) {
         <ol className="card topic-index">
           {section.topics.map((topic, index) => {
             const isLocked = topic.isPaid === true
+            const isEmpty = !isLocked && topic.questionCount === 0
             const hasArticle = Boolean(topic.mediumUrl)
             return (
               <li className={`topic-index-row ${hasArticle ? 'has-article' : ''}`} key={topic.id}>
                 <span className="topic-index-number" aria-hidden="true">{index + 1}</span>
                 <div className="topic-index-body">
-                  {isLocked ? (
+                  {isLocked || isEmpty ? (
                     <span className="topic-index-name is-disabled" aria-disabled="true">{topic.name}</span>
                   ) : (
                     <Link className="topic-index-name" to={buildPath(technology.slug, section.slug, topic.slug)}>
