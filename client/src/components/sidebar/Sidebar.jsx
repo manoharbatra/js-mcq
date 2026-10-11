@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { buildPath } from '../../router.js';
-import { ChevronDown, House, X } from "lucide-react";
-import { Link } from '../link';
-import './Sidebar.css'
+import { buildPath } from "../../paths.js";
+import { ChevronDown, House } from "lucide-react";
+import { Link, NavLink } from "react-router";
+import "./Sidebar.css";
 
-export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug, isHome, isOpen, onClose }) {
+const pageLinks = [{ to: "/", label: "Home", icon: House, end: true }];
+
+export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug, isOpen, onClose }) {
     const [expandedTechnologies, setExpandedTechnologies] = useState({});
     const { status, technologies } = catalogState;
 
@@ -12,22 +14,25 @@ export function Sidebar({ catalogState, activeTechnologySlug, activeSectionSlug,
         <aside id="site-nav" className={`sidebar ${isOpen ? "is-open" : ""}`} aria-label="Study navigation">
             <div className="sidebar-head">
                 <Link className="brand" to="/" onClick={onClose}>
-                    <span className="brand-mark">JS</span>
+                    <span className="brand-mark">MB</span>
                     <span className="brand-text">
-                        <strong>JS MCQ Practice</strong>
-                        <small>Interview practice</small>
+                        <strong>Manohar Batra</strong>
+                        <small>College to Corporate</small>
                     </span>
                 </Link>
-                <button className="icon-button sidebar-close" type="button" onClick={onClose} aria-label="Close navigation">
-                    <X size={18} />
-                </button>
             </div>
 
             <nav className="sidebar-nav">
-                <Link className={`nav-link ${isHome ? "active" : ""}`} to="/" aria-current={isHome ? "page" : undefined} onClick={onClose}>
-                    <House size={20} />
-                    Study topics
-                </Link>
+                <ul className="nav-pages">
+                    {pageLinks.map(({ to, label, icon: Icon, end }) => (
+                        <li key={to}>
+                            <NavLink className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`} to={to} end={end} onClick={onClose}>
+                                <Icon size={20} />
+                                {label}
+                            </NavLink>
+                        </li>
+                    ))}
+                </ul>
 
                 <p className="nav-label">Technologies</p>
                 {status === "loading" ? (

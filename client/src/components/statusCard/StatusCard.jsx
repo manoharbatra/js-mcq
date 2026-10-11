@@ -1,4 +1,4 @@
-import { Link } from '../link'
+import { Link } from 'react-router'
 import './StatusCard.css'
 
 export function StatusCard({ title, message, isLoading = false, isError = false, onRetry, homeLink = false }) {
@@ -10,7 +10,7 @@ export function StatusCard({ title, message, isLoading = false, isError = false,
       {(onRetry || homeLink) && (
         <div className="status-actions">
           {onRetry && <button className="button button-primary button-sm" type="button" onClick={onRetry}>Try again</button>}
-          {homeLink && <Link className="button button-secondary button-sm" to="/">Browse study topics</Link>}
+          {homeLink && <Link className="button button-secondary button-sm" to="/">Back to home</Link>}
         </div>
       )}
     </div>

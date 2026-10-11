@@ -1,0 +1,86 @@
+.courses-page {
+    padding: 16px 0 24px;
+}
+
+.course-category + .course-category {
+    margin-top: 56px;
+}
+
+.course-category h2 {
+    margin: 0 0 24px;
+    text-align: center;
+    color: var(--site-text);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* Fixed-width columns centred as a group, so a row of 3 cards sits in the middle instead of leaving a gap on the right. */
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 340px));
+    justify-content: center;
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.course-card {
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    border: 1px solid var(--site-border);
+    border-radius: var(--site-radius);
+    background: var(--site-surface);
+    box-shadow: var(--site-shadow);
+    transition: transform 250ms ease, box-shadow 250ms ease;
+}
+
+.course-card:hover {
+    transform: scale(1.03);
+    box-shadow: var(--site-shadow-lg);
+}
+
+.course-card-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--site-surface-tint);
+    object-fit: cover;
+}
+
+.course-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+}
+
+.course-card-body h3 {
+    margin: 0;
+    color: var(--site-text);
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+.course-card-body p {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 14.5px;
+    line-height: 1.55;
+}
+
+.course-card-meta {
+    margin-bottom: 14px;
+    color: var(--site-indigo-text);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+/* Pinned to the bottom so buttons line up across cards with different description lengths. */
+.course-card-cta {
+    width: 100%;
+    margin-top: auto;
+}

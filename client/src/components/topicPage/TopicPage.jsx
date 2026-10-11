@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchQuestions } from '../../api.js'
-import { buildPath } from '../../router.js'
+import { buildPath } from '../../paths.js'
 import { BookOpen, ExternalLink, Layers, List, Lock } from 'lucide-react'
-import { Link } from '../link'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { MembershipBanner } from '../membershipBanner'
 import { QuestionPanel } from '../questionPanel'
 import { StatusCard } from '../statusCard'
@@ -18,10 +18,7 @@ function RailCard({ icon: IconComponent, title, children }) {
 }
 
 function scrollToQuestion(number, behavior = 'smooth') {
-  const card = document.getElementById(`q-${number}`)
-  if (!card) return
-  card.scrollIntoView({ behavior, block: 'start' })
-  window.history.replaceState(null, '', `#q-${number}`)
+  document.getElementById(`q-${number}`)?.scrollIntoView({ behavior, block: 'start' })
 }
 
 // Rendered with a key per topic, so state starts fresh whenever the topic changes.
@@ -30,6 +27,8 @@ export function TopicPage({ technology, section, topic }) {
   const [requestId, setRequestId] = useState(0)
   const [activeNumber, setActiveNumber] = useState(1)
   const listRef = useRef(null)
+  const navigate = useNavigate()
+  const { hash } = useLocation()
 
   useEffect(() => {
     const controller = new AbortController()
@@ -47,8 +46,10 @@ export function TopicPage({ technology, section, topic }) {
   // Honour a `#q-N` deep link once the questions have rendered.
   useEffect(() => {
     if (status !== 'ready') return
-    const match = /^#q-(\d+)$/.exec(window.location.hash)
+    const match = /^#q-(\d+)$/.exec(hash)
     if (match) scrollToQuestion(Number(match[1]), 'auto')
+    // Only on first load: later hash changes come from the chips, which scroll themselves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
 
   // Track the top-most question in the upper part of the visible area to highlight it in the rail.
@@ -183,6 +184,7 @@ export function TopicPage({ technology, section, topic }) {
                         event.preventDefault()
                         setActiveNumber(number)
                         scrollToQuestion(number)
+                        navigate({ hash: `q-${number}` }, { replace: true })
                       }}
                       aria-current={isCurrent ? 'true' : undefined}
                       aria-label={`Question ${number}: ${item.title}`}

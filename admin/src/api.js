@@ -22,12 +22,3 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
   }
   return data
 }
-
-export function encodeQuery(values) {
-  const query = new URLSearchParams()
-  Object.entries(values).forEach(([key, value]) => {
-    if (value) query.set(key, value)
-  })
-  const text = query.toString()
-  return text ? `?${text}` : ''
-}

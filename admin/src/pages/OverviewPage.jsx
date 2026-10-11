@@ -1,6 +1,8 @@
+import { Link } from 'react-router'
 import { FileQuestion, FolderTree, Layers, Link2, Plus } from 'lucide-react'
 import { countLabel, indexCatalog, nameOf } from '../catalog.js'
 import { EmptyState, PageHeader, Pill } from '../components/ui.jsx'
+import { useWorkspace } from '../workspace.js'
 
 function StatCard({ icon: IconComponent, tone, label, value, note }) {
   return (
@@ -15,7 +17,8 @@ function StatCard({ icon: IconComponent, tone, label, value, note }) {
   )
 }
 
-export function OverviewPage({ technologies, questions, onNavigate }) {
+export function OverviewPage() {
+  const { technologies, questions } = useWorkspace()
   const { technologyById, sectionById, topicById } = indexCatalog(technologies)
   const resourceCount = questions.filter((question) => question.mediumUrl || question.compilerUrl).length
   const recentQuestions = [...questions].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 6)
@@ -28,12 +31,12 @@ export function OverviewPage({ technologies, questions, onNavigate }) {
         description="A snapshot of everything learners can practice."
         actions={(
           <>
-            <button className="button button-secondary" type="button" onClick={() => onNavigate('catalog')}>
+            <Link className="button button-secondary" to="/catalog">
               <FolderTree size={17} /> Manage structure
-            </button>
-            <button className="button button-primary" type="button" onClick={() => onNavigate('questions', { create: true })}>
+            </Link>
+            <Link className="button button-primary" to="/questions/new">
               <Plus size={17} /> New question
-            </button>
+            </Link>
           </>
         )}
       />
@@ -78,7 +81,7 @@ export function OverviewPage({ technologies, questions, onNavigate }) {
               icon={FolderTree}
               title="No technologies yet"
               detail="Create a technology, then add sections and topics to it."
-              action={<button className="button button-secondary" type="button" onClick={() => onNavigate('catalog')}>Open content structure</button>}
+              action={<Link className="button button-secondary" to="/catalog">Open content structure</Link>}
             />
           )}
         </section>
@@ -86,7 +89,7 @@ export function OverviewPage({ technologies, questions, onNavigate }) {
         <section className="panel">
           <div className="panel-header">
             <div><h2>Recently updated</h2><p>Your latest question edits</p></div>
-            <button className="button button-ghost button-sm" type="button" onClick={() => onNavigate('questions')}>View all</button>
+            <Link className="button button-ghost button-sm" to="/questions">View all</Link>
           </div>
           {recentQuestions.length ? (
             <ul className="recent-list">

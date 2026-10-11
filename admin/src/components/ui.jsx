@@ -87,3 +87,12 @@ export function Switch({ checked, onChange, label, description }) {
   )
 }
 
+// Shown while a lazily loaded page (or the session check) is on its way.
+export function PageLoader({ fullScreen = false, label = 'Loading…' }) {
+  return (
+    <div className={fullScreen ? 'boot-screen' : 'page-loader'} role="status">
+      {fullScreen ? <span className="brand-mark brand-mark-lg">JS</span> : <span className="spinner" aria-hidden="true" />}
+      <span>{label}</span>
+    </div>
+  )
+}

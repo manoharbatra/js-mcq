@@ -1,0 +1,141 @@
+/* Shared styles for the home, courses and podcasts pages. They render inside the app shell,
+   so their tokens map onto the app's own palette (and follow its light/dark theme). */
+
+.site {
+    --site-bg: var(--bg);
+    --site-surface: var(--surface);
+    --site-surface-muted: var(--surface-muted);
+    --site-surface-tint: var(--surface-muted);
+    --site-text: var(--text);
+    --site-text-2: var(--text-secondary);
+    --site-muted: var(--muted);
+    --site-faint: var(--gutter);
+    --site-border: var(--border);
+    --site-brand: var(--accent);
+    --site-brand-hover: var(--accent-hover);
+    --site-brand-soft: var(--accent-soft);
+    /* Highlights use the app's blue accent; the yellow comes from its primary buttons. */
+    --site-indigo: var(--accent);
+    --site-indigo-text: var(--accent-text);
+    --site-announce-bg: var(--button-bg);
+    --site-announce-text: var(--button-text);
+    --site-shadow: var(--shadow);
+    --site-shadow-lg: 0 20px 25px -5px rgb(15 23 42 / 10%), 0 8px 10px -6px rgb(15 23 42 / 8%);
+    --site-radius: 16px;
+    --site-max: 1280px;
+
+    max-width: var(--site-max);
+    margin: 0 auto;
+    color: var(--site-text);
+}
+
+:root[data-theme='dark'] .site {
+    --site-shadow-lg: 0 20px 40px rgb(0 0 0 / 45%);
+}
+
+.site-container {
+    width: 100%;
+}
+
+.site-section {
+    padding: 40px 0;
+}
+
+.site-section-title {
+    margin: 0 0 24px;
+    color: var(--site-text);
+    text-align: center;
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.site-page-title {
+    margin: 0 0 32px;
+    text-align: center;
+    font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+/* Big headline that introduces the galleries on the home page. */
+.home-trust-title {
+    margin: 8px 0 0;
+}
+
+.site-select {
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--site-border);
+    border-radius: 10px;
+    color: var(--site-text);
+    background: var(--site-surface);
+    box-shadow: var(--site-shadow);
+    font: inherit;
+    font-size: 15px;
+}
+
+.site-select:focus-visible {
+    outline: 2px solid var(--site-brand);
+    outline-offset: 2px;
+}
+
+.site-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--button-text);
+    background: var(--button-bg);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 150ms ease, transform 200ms ease;
+}
+
+.site-button:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* Fade-up when a section scrolls into view (see useRevealOnScroll). */
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+@media (max-width: 640px) {
+    .site-section {
+        padding: 32px 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

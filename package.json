@@ -14,8 +14,7 @@
     "dev:admin": "npm run dev --workspace admin",
     "dev:backend": "npm run dev --workspace backend",
     "build": "npm run build --workspace client && npm run build --workspace admin",
-    "lint": "npm run lint --workspace client",
-    "create-admin": "npm run create-admin --workspace backend"
+    "lint": "npm run lint --workspace client"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

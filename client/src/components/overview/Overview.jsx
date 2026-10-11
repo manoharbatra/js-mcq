@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react'
-import { Link } from '../link'
+import { Link } from 'react-router'
 import { StatusCard } from '../statusCard'
 import { TopicBadge } from '../topicBadge'
 import './Overview.css'

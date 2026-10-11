@@ -1,0 +1,80 @@
+.carousel {
+    position: relative;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 18px;
+    margin: 0;
+    padding: 8px 4px 16px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    list-style: none;
+    cursor: grab;
+}
+
+.carousel-track::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-track:active {
+    cursor: grabbing;
+}
+
+.carousel-track > li {
+    flex: none;
+    scroll-snap-align: start;
+}
+
+.carousel-track img {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid var(--site-border);
+    border-radius: 50%;
+    color: var(--site-text);
+    background: var(--site-surface);
+    box-shadow: var(--site-shadow-lg);
+    transform: translateY(-50%);
+    cursor: pointer;
+    transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.06);
+}
+
+.carousel-arrow:disabled {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.carousel-arrow:focus-visible {
+    outline: 2px solid var(--site-brand);
+    outline-offset: 2px;
+}
+
+.carousel-arrow-prev {
+    left: -8px;
+}
+
+.carousel-arrow-next {
+    right: -8px;
+}
+
+@media (max-width: 640px) {
+    .carousel-arrow {
+        display: none;
+    }
+}

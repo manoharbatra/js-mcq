@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
 import { BookOpen, ChevronRight, EyeOff, FolderTree, GripVertical, Layers, Link2, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react'
 import { apiRequest } from '../api.js'
 import { countLabel } from '../catalog.js'
 import { EmptyState, Modal, PageHeader, Pill, Switch } from '../components/ui.jsx'
 import { useConfirm } from '../components/ConfirmProvider.jsx'
+import { questionsPath, useWorkspace } from '../workspace.js'
 
 const levels = {
   technology: {
@@ -219,7 +221,10 @@ function CatalogColumn({ kind, title, subtitle, items, selectedId, onSelect, onA
   )
 }
 
-export function CatalogPage({ technologies, refresh, notify, onOpenQuestions }) {
+export function CatalogPage() {
+  const { technologies, refresh, notify } = useWorkspace()
+  const navigate = useNavigate()
+  const onOpenQuestions = (filter) => navigate(questionsPath(filter))
   const [technologyId, setTechnologyId] = useState('')
   const [sectionId, setSectionId] = useState('')
   const [editing, setEditing] = useState(null)

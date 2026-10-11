@@ -1,6 +1,6 @@
 import { Lock, SquareArrowOutUpRight } from 'lucide-react'
-import { buildPath } from '../../router.js'
-import { Link } from '../link'
+import { buildPath } from '../../paths.js'
+import { Link } from 'react-router'
 import { MembershipBanner } from '../membershipBanner'
 import { StatusCard } from '../statusCard'
 import './SectionPage.css'

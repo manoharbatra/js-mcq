@@ -5,6 +5,7 @@
     flex: none;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
     overflow-y: auto;
     color: var(--sidebar-text);
     background: var(--sidebar-bg);
@@ -249,4 +250,12 @@
     .sidebar-close {
         display: inline-grid;
     }
+}
+
+.nav-pages {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }

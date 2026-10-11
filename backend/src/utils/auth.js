@@ -20,7 +20,7 @@ export async function authenticateAdmin(req, res, next) {
     if (typeof claims !== 'object' || typeof claims.sub !== 'string') {
       throw new HttpError(401, 'Invalid session')
     }
-    const admin = await Admin.findById(claims.sub).select('_id email isActive')
+    const admin = await Admin.findById(claims.sub).select('_id name email isActive createdAt')
     if (!admin?.isActive) throw new HttpError(401, 'Invalid session')
     req.admin = admin
     next()

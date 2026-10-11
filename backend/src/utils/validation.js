@@ -13,9 +13,23 @@ const contentPartSchema = z.object({
   value: z.union([z.string().max(20000), z.record(z.string(), z.unknown())]),
 }).strict()
 
+const emailSchema = z.string().trim().email('Enter a valid email address').max(254).transform((value) => value.toLowerCase())
+
 export const loginSchema = z.object({
-  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
+  email: emailSchema,
   password: z.string().min(1).max(200),
+}).strict()
+
+export const registerSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer'),
+  email: emailSchema,
+  password: z.string()
+    .min(12, 'Password must be at least 12 characters')
+    .max(200, 'Password must be 200 characters or fewer'),
+}).strict()
+
+export const adminStatusSchema = z.object({
+  isActive: z.boolean(),
 }).strict()
 
 const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i)

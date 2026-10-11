@@ -1,192 +1,98 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { CircleAlert, CircleCheck, FolderTree, LayoutDashboard, ListChecks, LogOut, Moon, RefreshCw, Sun, X } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { apiRequest } from './api.js'
 import { useTheme } from './useTheme.js'
-import { CatalogPage } from './pages/CatalogPage.jsx'
-import { LoginPage } from './pages/LoginPage.jsx'
-import { OverviewPage } from './pages/OverviewPage.jsx'
-import { QuestionsPage } from './pages/QuestionsPage.jsx'
+import { AdminLayout } from './components/AdminLayout.jsx'
+import { PageLoader } from './components/ui.jsx'
 
-const navigation = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'catalog', label: 'Content structure', icon: FolderTree },
-  { id: 'questions', label: 'Question library', icon: ListChecks },
-]
+// Every page is its own chunk, fetched the first time its route is visited.
+const page = (load, name) => lazy(() => load().then((module) => ({ default: module[name] })))
+const LoginPage = page(() => import('./pages/LoginPage.jsx'), 'LoginPage')
+const RegisterPage = page(() => import('./pages/RegisterPage.jsx'), 'RegisterPage')
+const OverviewPage = page(() => import('./pages/OverviewPage.jsx'), 'OverviewPage')
+const CatalogPage = page(() => import('./pages/CatalogPage.jsx'), 'CatalogPage')
+const QuestionsPage = page(() => import('./pages/QuestionsPage.jsx'), 'QuestionsPage')
+const QuestionEditorPage = page(() => import('./pages/QuestionEditorPage.jsx'), 'QuestionEditorPage')
+const AdminsPage = page(() => import('./pages/AdminsPage.jsx'), 'AdminsPage')
+const NotFoundPage = page(() => import('./pages/NotFoundPage.jsx'), 'NotFoundPage')
+
+function RequireAuth({ admin }) {
+  const location = useLocation()
+  if (!admin) return <Navigate to="/login" replace state={{ from: location }} />
+  return <Outlet />
+}
+
+// Once signed in, leave /login or /register for the page that originally redirected here (or /).
+function GuestOnly({ admin }) {
+  const from = useLocation().state?.from
+  if (admin) return <Navigate to={from ? `${from.pathname}${from.search ?? ''}` : '/'} replace />
+  return (
+    <Suspense fallback={<PageLoader fullScreen />}>
+      <Outlet />
+    </Suspense>
+  )
+}
 
 function App() {
   const [theme, toggleTheme] = useTheme()
+  const navigate = useNavigate()
   const [admin, setAdmin] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
-  const [activePage, setActivePage] = useState('overview')
-  const [libraryOptions, setLibraryOptions] = useState({ key: 0, filter: null, create: false })
-  const [technologies, setTechnologies] = useState([])
-  const [questions, setQuestions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [notice, setNotice] = useState(null)
-  const noticeTimer = useRef(null)
-
-  const notify = useCallback((message, type = 'success') => {
-    setNotice({ message, type })
-    window.clearTimeout(noticeTimer.current)
-    noticeTimer.current = window.setTimeout(() => setNotice(null), 4500)
-  }, [])
-
-  useEffect(() => () => window.clearTimeout(noticeTimer.current), [])
-
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [catalogData, questionData] = await Promise.all([
-        apiRequest('/admin/catalog'),
-        apiRequest('/admin/questions'),
-      ])
-      setTechnologies(catalogData.technologies)
-      setQuestions(questionData.questions)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const [sessionMessage, setSessionMessage] = useState('')
 
   useEffect(() => {
     let mounted = true
     apiRequest('/auth/me')
       .then((data) => { if (mounted) setAdmin(data.admin) })
-      .catch((error) => { if (error.message !== 'Authentication required' && error.message !== 'Invalid or expired session') notify(error.message, 'error') })
+      .catch(() => { /* Not signed in: the routes send the visitor to /login. */ })
       .finally(() => { if (mounted) setCheckingSession(false) })
     return () => { mounted = false }
-  }, [notify])
+  }, [])
 
   useEffect(() => {
     function expireSession() {
       setAdmin(null)
-      notify('Your session expired. Please sign in again.', 'error')
+      setSessionMessage('Your session expired. Please sign in again.')
     }
     window.addEventListener('admin-session-expired', expireSession)
     return () => window.removeEventListener('admin-session-expired', expireSession)
-  }, [notify])
+  }, [])
 
-  useEffect(() => {
-    if (admin) refresh().catch((error) => notify(error.message, 'error'))
-  }, [admin, refresh, notify])
-
-  async function login(email, password) {
+  // GuestOnly redirects away from /login as soon as `admin` is set.
+  const login = useCallback(async (email, password) => {
     const data = await apiRequest('/auth/login', { method: 'POST', body: { email, password } })
+    setSessionMessage('')
     setAdmin(data.admin)
-    setActivePage('overview')
-  }
+  }, [])
 
-  async function logout() {
-    try {
-      await apiRequest('/auth/logout', { method: 'POST' })
-      setAdmin(null)
-      setTechnologies([])
-      setQuestions([])
-      setActivePage('overview')
-    } catch (error) {
-      notify(error.message, 'error')
-    }
-  }
+  const logout = useCallback(async () => {
+    await apiRequest('/auth/logout', { method: 'POST' })
+    setAdmin(null)
+    navigate('/login', { replace: true })
+  }, [navigate])
 
-  // Opening the library always remounts it so filters and "create" start from the options given.
-  function navigate(page, { create = false, filter = null } = {}) {
-    if (page === 'questions') setLibraryOptions((current) => ({ key: current.key + 1, filter, create }))
-    setActivePage(page)
-  }
+  if (checkingSession) return <PageLoader fullScreen label="Opening your workspace…" />
 
-  if (checkingSession) {
-    return <main className="boot-screen"><span className="brand-mark brand-mark-lg">JS</span><span>Opening your workspace…</span></main>
-  }
-  if (!admin) return <LoginPage onLogin={login} theme={theme} toggleTheme={toggleTheme} />
-
-  const activeItem = navigation.find((item) => item.id === activePage)
-  const initial = admin.email.slice(0, 1).toUpperCase()
+  const themeProps = { theme, toggleTheme }
 
   return (
-    <div className="admin-shell">
-      <aside className="sidebar">
-        <a className="brand" href="#overview" onClick={(event) => { event.preventDefault(); navigate('overview') }}>
-          <span className="brand-mark">JS</span>
-          <span className="brand-copy"><strong>JS MCQ</strong><small>Content studio</small></span>
-        </a>
-        <p className="sidebar-label">Workspace</p>
-        <nav className="side-nav" aria-label="Admin sections">
-          {navigation.map(({ id, label, icon: IconComponent }) => (
-            <button
-              key={id}
-              className={`nav-item ${activePage === id ? 'active' : ''}`}
-              type="button"
-              aria-current={activePage === id ? 'page' : undefined}
-              onClick={() => navigate(id)}
-            >
-              <IconComponent size={19} />
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-user">
-          <span className="avatar">{initial}</span>
-          <span className="user-copy"><strong>{admin.email}</strong><small>Administrator</small></span>
-          <button className="icon-button sidebar-logout" type="button" onClick={logout} aria-label="Sign out" title="Sign out">
-            <LogOut size={17} />
-          </button>
-        </div>
-      </aside>
-
-      <div className="main-area">
-        <header className="topbar">
-          <div className="topbar-title">
-            <span>Workspace</span>
-            <span aria-hidden="true">/</span>
-            <strong>{activeItem?.label}</strong>
-          </div>
-          <div className="topbar-actions">
-            {loading && <span className="sync-indicator"><RefreshCw size={15} /> Syncing…</span>}
-            <button
-              className="icon-button icon-button-outline"
-              type="button"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <span className="avatar avatar-sm" title={admin.email}>{initial}</span>
-          </div>
-        </header>
-
-        <main className="content-area">
-          {activePage === 'overview' && <OverviewPage technologies={technologies} questions={questions} onNavigate={navigate} />}
-          {activePage === 'catalog' && (
-            <CatalogPage
-              technologies={technologies}
-              refresh={refresh}
-              notify={notify}
-              onOpenQuestions={(filter) => navigate('questions', { filter })}
-            />
-          )}
-          {activePage === 'questions' && (
-            <QuestionsPage
-              key={libraryOptions.key}
-              technologies={technologies}
-              questions={questions}
-              refresh={refresh}
-              notify={notify}
-              theme={theme}
-              initialFilter={libraryOptions.filter}
-              createOnLoad={libraryOptions.create}
-            />
-          )}
-        </main>
-      </div>
-
-      {notice && (
-        <div className={`toast ${notice.type === 'error' ? 'toast-error' : ''}`} role={notice.type === 'error' ? 'alert' : 'status'}>
-          {notice.type === 'error' ? <CircleAlert size={18} /> : <CircleCheck size={18} />}
-          <span>{notice.message}</span>
-          <button className="toast-close" type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification"><X size={16} /></button>
-        </div>
-      )}
-    </div>
+    <Routes>
+      <Route element={<GuestOnly admin={admin} />}>
+        <Route path="/login" element={<LoginPage onLogin={login} notice={sessionMessage} {...themeProps} />} />
+        <Route path="/register" element={<RegisterPage {...themeProps} />} />
+      </Route>
+      <Route element={<RequireAuth admin={admin} />}>
+        <Route element={<AdminLayout admin={admin} onLogout={logout} {...themeProps} />}>
+          <Route index element={<OverviewPage />} />
+          <Route path="catalog" element={<CatalogPage />} />
+          <Route path="questions" element={<QuestionsPage />} />
+          <Route path="questions/new" element={<QuestionEditorPage />} />
+          <Route path="questions/:questionId/edit" element={<QuestionEditorPage />} />
+          <Route path="admins" element={<AdminsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Route>
+    </Routes>
   )
 }
 

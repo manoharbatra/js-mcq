@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authenticateAdmin } from '../utils/auth.js'
 import { asyncHandler } from '../utils/errors.js'
 import {
+  adminStatusSchema,
   questionOrderSchema,
   questionSchema,
   questionUpdateSchema,
@@ -10,11 +11,26 @@ import {
   topicOrderSchema,
   topicSchema,
 } from '../utils/validation.js'
+import * as authService from '../services/authService.js'
 import * as catalogService from '../services/catalogService.js'
 import * as questionService from '../services/questionService.js'
 
 export const adminRouter = Router()
 adminRouter.use(authenticateAdmin)
+
+adminRouter.get('/admins', asyncHandler(async (req, res) => {
+  res.json({ admins: await authService.listAdmins() })
+}))
+
+adminRouter.patch('/admins/:id', asyncHandler(async (req, res) => {
+  const { isActive } = adminStatusSchema.parse(req.body)
+  res.json({ admin: await authService.setAdminActive(req.params.id, isActive, req.admin.id) })
+}))
+
+adminRouter.delete('/admins/:id', asyncHandler(async (req, res) => {
+  await authService.deleteAdmin(req.params.id, req.admin.id)
+  res.status(204).end()
+}))
 
 adminRouter.get('/catalog', asyncHandler(async (req, res) => {
   res.json({ technologies: await catalogService.listCatalogForAdmin() })

@@ -26,9 +26,11 @@ npm run dev
 
 The Vite apps proxy `/api` requests to the backend during development. For API details, environment configuration, admin provisioning, and endpoint documentation, see [backend/README.md](./backend/README.md). For admin UI information, see [admin/README.md](./admin/README.md).
 
-The learner client loads topics, subtopics, and short-answer questions directly from the backend public API. The former bundled question dataset has been removed.
+Content is organised as **technology › section › topic › question**. The learner client reads it from the backend's public API; admins manage it in the admin app. Topics and questions can be marked as premium (`isPaid`), in which case the API withholds the locked content and the learner app shows a membership prompt.
 
-To provision the first admin separately, run `npm run create-admin` from the repository root. The account details are currently read by `backend/scripts/create-admin.js`; use a password that meets that script’s minimum length and do not commit real credentials.
+The learner client opens on the home page (`/`), with Courses (`/courses`) and Podcasts (`/podcasts`) in the same sidebar layout. Practice URLs follow the content structure: `/:technology/:section/:topic` (for example `/javascript/output-based/closures`).
+
+Administrators register from the admin app's **Request access** screen. New accounts stay inactive until an existing administrator approves them on the **Administrators** page. On an empty database, activate the first account once in MongoDB; see [backend/README.md](./backend/README.md#administrator-accounts).
 
 ## Other commands
 

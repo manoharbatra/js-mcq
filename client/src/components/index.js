@@ -1,4 +1,3 @@
-export * from './link'
 export * from './membershipBanner'
 export * from './overview'
 export * from './promptBlocks'

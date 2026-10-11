@@ -693,3 +693,35 @@ button.catalog-item-main { cursor: pointer; }
 }
 .catalog-drag-handle:hover { color: var(--text-2); }
 .catalog-item.is-dragging { border-color: var(--accent); background: var(--surface); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+
+/* ---------- Registration & administrators ---------- */
+
+.auth-switch { margin-top: 20px; color: var(--muted); text-align: center; font-size: 14.5px; }
+.link-button { padding: 0; border: 0; color: var(--accent-text); background: none; font-weight: 600; cursor: pointer; }
+.link-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.alert-info { border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); color: var(--text-2); background: var(--accent-soft); line-height: 1.55; }
+.alert-info .lucide { color: var(--accent-text); margin-top: 2px; }
+.field-error { color: var(--danger-text); font-size: 13px; }
+.field input[aria-invalid='true'] { border-color: var(--danger); }
+
+.nav-badge { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; color: #fff; background: var(--danger); text-align: center; font-size: 12px; font-weight: 700; }
+.count-badge { display: inline-grid; min-width: 24px; margin-left: 6px; padding: 1px 8px; border-radius: 999px; color: var(--text-2); background: var(--surface-3); font-size: 12.5px; font-weight: 700; vertical-align: 2px; }
+
+.admin-section + .admin-section { margin-top: 20px; }
+.panel-message { padding: 24px; color: var(--muted); font-size: 14px; }
+.admin-list { margin: 0; padding: 6px 0; list-style: none; }
+.admin-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 24px; }
+.admin-row + .admin-row { border-top: 1px solid var(--border); }
+.avatar-muted { color: var(--text-2); background: var(--surface-3); }
+.admin-copy { display: grid; min-width: 180px; flex: 1; gap: 2px; }
+.admin-copy strong { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+.admin-copy > span { overflow: hidden; color: var(--muted); font-size: 13.5px; text-overflow: ellipsis; white-space: nowrap; }
+.you-tag { padding: 1px 8px; border-radius: 999px; color: var(--accent-text); background: var(--accent-soft); font-size: 12px; font-weight: 600; }
+.admin-actions { display: flex; align-items: center; gap: 6px; }
+
+/* ---------- Routing ---------- */
+
+a.nav-item { text-decoration: none; }
+a.link-button { text-decoration: none; }
+.page-loader { display: flex; min-height: 260px; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 14.5px; }
+.spinner { width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 700ms linear infinite; }

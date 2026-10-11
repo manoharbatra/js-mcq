@@ -1,33 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { ArrowDown, ArrowUp, Code2, FileQuestion, GripVertical, Link2, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { apiRequest } from '../api.js'
-import { firstPlacement, indexCatalog, nameOf } from '../catalog.js'
+import { indexCatalog, nameOf } from '../catalog.js'
 import { EmptyState, PageHeader, Pill } from '../components/ui.jsx'
 import { useConfirm } from '../components/ConfirmProvider.jsx'
-import { QuestionEditor } from './QuestionEditor.jsx'
+import { questionsPath, useWorkspace } from '../workspace.js'
 
-function emptyQuestion() {
-  return {
-    technologyId: '',
-    sectionId: '',
-    topicId: '',
-    title: '',
-    label: 'SHORT ANSWER',
-    content: [],
-    answer: '',
-    mediumUrl: '',
-    compilerUrl: '',
-    isPaid: false,
-  }
-}
-
-export function QuestionsPage({ technologies, questions, refresh, notify, theme, initialFilter, createOnLoad }) {
-  const [technologyFilter, setTechnologyFilter] = useState(initialFilter?.technologyId ?? '')
-  const [sectionFilter, setSectionFilter] = useState(initialFilter?.sectionId ?? '')
-  const [topicFilter, setTopicFilter] = useState(initialFilter?.topicId ?? '')
-  const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState(emptyQuestion)
-  const [busy, setBusy] = useState(false)
+export function QuestionsPage() {
+  const { technologies, questions, isLoaded, refresh, notify } = useWorkspace()
+  const navigate = useNavigate()
+  const location = useLocation()
+  // Filters live in the URL (?technologyId=…&sectionId=…&topicId=…) so they survive reloads and back/forward.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const technologyFilter = searchParams.get('technologyId') ?? ''
+  const sectionFilter = searchParams.get('sectionId') ?? ''
+  const topicFilter = searchParams.get('topicId') ?? ''
   const [search, setSearch] = useState('')
   const [orderOverride, setOrderOverride] = useState(null)
   const [draggedQuestionId, setDraggedQuestionId] = useState(null)
@@ -56,61 +44,27 @@ export function QuestionsPage({ technologies, questions, refresh, notify, theme,
     return [...filteredQuestions].sort((a, b) => (order.get(a._id) ?? Infinity) - (order.get(b._id) ?? Infinity))
   }, [filteredQuestions, orderOverride, topicFilter])
 
-  // Drop filters that point at records deleted since they were chosen.
-  useEffect(() => {
-    if (technologyFilter && !catalogIndex.technologyById.has(technologyFilter)) setTechnologyFilter('')
-    if (sectionFilter && !catalogIndex.sectionById.has(sectionFilter)) setSectionFilter('')
-    if (topicFilter && !catalogIndex.topicById.has(topicFilter)) setTopicFilter('')
-  }, [catalogIndex, technologyFilter, sectionFilter, topicFilter])
-
-  function startNew() {
-    setEditingId('new')
-    setForm({
-      ...emptyQuestion(),
-      ...firstPlacement(technologies, { technologyId: technologyFilter, sectionId: sectionFilter, topicId: topicFilter }),
-    })
+  function setFilters(filter) {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(filter)) if (value) params.set(key, value)
+    setSearchParams(params, { replace: true })
   }
 
+  // Drop filters that point at records that no longer exist (deleted, or a stale link).
   useEffect(() => {
-    if (createOnLoad && technologies.length) startNew()
-  }, [createOnLoad, technologies.length])
-
-  function startEdit(question) {
-    setEditingId(question._id)
-    setForm({
-      technologyId: question.technologyId,
-      sectionId: question.sectionId,
-      topicId: question.topicId,
-      title: question.title,
-      label: question.label ?? 'SHORT ANSWER',
-      content: question.content ?? [],
-      answer: question.answer,
-      mediumUrl: question.mediumUrl ?? '',
-      compilerUrl: question.compilerUrl ?? '',
-      isPaid: question.isPaid === true,
-    })
-  }
-
-  async function saveQuestion(event) {
-    event.preventDefault()
-    setBusy(true)
-    try {
-      const isNew = editingId === 'new'
-      // Technology and section only drive the pickers; the API derives them from the topic.
-      const { technologyId: _technologyId, sectionId: _sectionId, ...body } = form
-      await apiRequest(isNew ? '/admin/questions' : `/admin/questions/${editingId}`, {
-        method: isNew ? 'POST' : 'PATCH',
-        body,
-      })
-      setEditingId(null)
-      await refresh()
-      notify(isNew ? 'Question created.' : 'Question updated.')
-    } catch (error) {
-      notify(error.message, 'error')
-    } finally {
-      setBusy(false)
+    if (!isLoaded) return
+    const technologyId = catalogIndex.technologyById.has(technologyFilter) ? technologyFilter : ''
+    const sectionId = technologyId && catalogIndex.sectionById.has(sectionFilter) ? sectionFilter : ''
+    const topicId = sectionId && catalogIndex.topicById.has(topicFilter) ? topicFilter : ''
+    if (technologyId !== technologyFilter || sectionId !== sectionFilter || topicId !== topicFilter) {
+      setFilters({ technologyId, sectionId, topicId })
     }
-  }
+  }, [isLoaded, catalogIndex, technologyFilter, sectionFilter, topicFilter])
+
+  const currentFilter = { technologyId: technologyFilter, sectionId: sectionFilter, topicId: topicFilter }
+  const startNew = () => navigate(questionsPath(currentFilter, '/questions/new'))
+  // The editor returns to this exact library view (filters included) when it closes.
+  const startEdit = (question) => navigate(`/questions/${question._id}/edit`, { state: { returnTo: `${location.pathname}${location.search}` } })
 
   async function deleteQuestion(question) {
     const confirmed = await confirm({
@@ -179,21 +133,6 @@ export function QuestionsPage({ technologies, questions, refresh, notify, theme,
     void saveQuestionOrder(reordered)
   }
 
-  if (editingId !== null) {
-    return (
-      <QuestionEditor
-        form={form}
-        setForm={setForm}
-        technologies={technologies}
-        theme={theme}
-        busy={busy}
-        isNew={editingId === 'new'}
-        onCancel={() => setEditingId(null)}
-        onSubmit={saveQuestion}
-      />
-    )
-  }
-
   return (
     <>
       <PageHeader
@@ -213,15 +152,15 @@ export function QuestionsPage({ technologies, questions, refresh, notify, theme,
             <Search size={17} aria-hidden="true" />
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions…" aria-label="Search questions" />
           </label>
-          <select aria-label="Filter by technology" value={technologyFilter} onChange={(event) => { setTechnologyFilter(event.target.value); setSectionFilter(''); setTopicFilter('') }}>
+          <select aria-label="Filter by technology" value={technologyFilter} onChange={(event) => setFilters({ technologyId: event.target.value })}>
             <option value="">All technologies</option>
             {technologies.map((technology) => <option value={technology._id} key={technology._id}>{technology.name}</option>)}
           </select>
-          <select aria-label="Filter by section" value={sectionFilter} onChange={(event) => { setSectionFilter(event.target.value); setTopicFilter('') }} disabled={!availableSections.length}>
+          <select aria-label="Filter by section" value={sectionFilter} onChange={(event) => setFilters({ technologyId: technologyFilter, sectionId: event.target.value })} disabled={!availableSections.length}>
             <option value="">All sections</option>
             {availableSections.map((section) => <option value={section._id} key={section._id}>{section.name}</option>)}
           </select>
-          <select aria-label="Filter by topic" value={topicFilter} onChange={(event) => setTopicFilter(event.target.value)} disabled={!availableTopics.length}>
+          <select aria-label="Filter by topic" value={topicFilter} onChange={(event) => setFilters({ technologyId: technologyFilter, sectionId: sectionFilter, topicId: event.target.value })} disabled={!availableTopics.length}>
             <option value="">All topics</option>
             {availableTopics.map((topic) => <option value={topic._id} key={topic._id}>{topic.name}</option>)}
           </select>

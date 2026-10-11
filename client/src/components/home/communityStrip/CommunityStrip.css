@@ -1,0 +1,13 @@
+.community-strip {
+    padding-bottom: 56px;
+    background: var(--site-bg);
+}
+
+.community-strip ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin: 0 auto;
+    list-style: none;
+}

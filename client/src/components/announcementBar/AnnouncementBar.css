@@ -1,0 +1,40 @@
+/* Full-width strip directly under the top bar on the home page. */
+.announcement-bar {
+    flex: none;
+    overflow: hidden;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--button-hover);
+    color: var(--button-text);
+    background: var(--button-bg);
+    font-size: 14.5px;
+    font-weight: 500;
+}
+
+.announcement-track {
+    display: flex;
+    width: max-content;
+    gap: 64px;
+    margin: 0;
+    padding: 0 32px;
+    list-style: none;
+    white-space: nowrap;
+    animation: announcement-scroll 45s linear infinite;
+}
+
+/* Hovering pauses the scroll so a message can be read. */
+.announcement-bar:hover .announcement-track {
+    animation-play-state: paused;
+}
+
+/* The track holds the list twice, so shifting by half returns it to the same picture. */
+@keyframes announcement-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-50% - 32px)); }
+}
+
+/* App.css zeroes animation durations under reduced motion; the marquee is meant to keep moving. */
+@media (prefers-reduced-motion: reduce) {
+    .announcement-track {
+        animation-duration: 45s !important;
+    }
+}

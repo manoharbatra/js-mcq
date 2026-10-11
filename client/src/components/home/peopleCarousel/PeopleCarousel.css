@@ -1,0 +1,55 @@
+.people-carousel {
+    padding-top: 24px;
+}
+
+.person-card {
+    display: flex;
+    width: 240px;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 12px 16px;
+    border: 1px solid var(--site-border);
+    border-radius: 14px;
+    background: var(--site-surface);
+    box-shadow: var(--site-shadow);
+    text-align: center;
+    transition: transform 250ms ease, box-shadow 250ms ease;
+}
+
+.person-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--site-shadow-lg);
+}
+
+.person-photo {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    background: var(--site-surface-tint);
+    object-fit: cover;
+}
+
+.person-name {
+    margin: 12px 0 2px;
+    color: var(--site-text);
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.person-description {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+/* Logos are white JPEGs, so they sit on a white chip in both themes. */
+.person-logo {
+    height: 32px;
+    max-width: 96px;
+    margin-top: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #fff;
+    object-fit: contain;
+}

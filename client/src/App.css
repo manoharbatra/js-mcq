@@ -236,6 +236,62 @@ a {
     margin-left: auto;
 }
 
+/* Courses / Podcasts links, just before the theme toggle. */
+.topbar-links {
+    display: flex;
+    flex: none;
+    gap: 8px;
+}
+
+.topbar-link {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    background: var(--surface);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.topbar-link:hover {
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.topbar-link.active {
+    border-color: var(--accent);
+    color: var(--accent-contrast);
+    background: var(--accent);
+}
+
+.topbar-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+    .topbar-link {
+        width: 38px;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .topbar-link span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+
 .breadcrumbs {
     min-width: 0;
     flex: 1;

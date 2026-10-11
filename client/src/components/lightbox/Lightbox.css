@@ -1,0 +1,119 @@
+.lightbox {
+    width: min(960px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 0;
+    border: 0;
+    overflow: visible;
+    background: transparent;
+}
+
+.lightbox::backdrop {
+    background: rgb(2 6 23 / 72%);
+    backdrop-filter: blur(3px);
+}
+
+.lightbox-frame {
+    position: relative;
+    display: grid;
+    gap: 12px;
+}
+
+.lightbox-image {
+    width: 100%;
+    max-height: calc(100vh - 180px);
+    border-radius: 12px;
+    background: #0f172a;
+    object-fit: contain;
+}
+
+.lightbox-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    color: var(--site-text, #0f172a);
+    background: var(--site-surface, #fff);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
+}
+
+.lightbox-info h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.lightbox-info p {
+    margin: 2px 0 0;
+    color: var(--site-muted, #475569);
+    font-size: 14.5px;
+}
+
+.lightbox-logo {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 8px;
+    background: #fff;
+    object-fit: contain;
+}
+
+.lightbox-count {
+    margin-left: auto;
+    color: var(--site-muted, #475569);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+.lightbox-button {
+    position: absolute;
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgb(15 23 42 / 75%);
+    cursor: pointer;
+    transition: background 150ms ease;
+}
+
+.lightbox-button:hover {
+    background: rgb(15 23 42 / 95%);
+}
+
+.lightbox-button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.lightbox-close {
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+}
+
+.lightbox-prev,
+.lightbox-next {
+    top: calc(50% - 40px);
+}
+
+.lightbox-prev {
+    left: -18px;
+}
+
+.lightbox-next {
+    right: -18px;
+}
+
+@media (max-width: 640px) {
+    .lightbox-prev {
+        left: 6px;
+    }
+
+    .lightbox-next {
+        right: 6px;
+    }
+}
